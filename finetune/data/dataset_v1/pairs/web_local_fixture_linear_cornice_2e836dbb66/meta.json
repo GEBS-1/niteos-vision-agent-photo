@@ -1,0 +1,18 @@
+{
+  "source_kind": "web_ref",
+  "project_id": "",
+  "history_id": "",
+  "vote": "like",
+  "quality": "good",
+  "scenario_id": "linear_cornice",
+  "scenario_name": "Projectors up-down (fixture)",
+  "attribution": "NITEOS mvp-fixtures",
+  "license": "internal",
+  "url": "",
+  "id": "web_local_fixture_linear_cornice_2e836dbb66",
+  "split": "train",
+  "source_file": "",
+  "target_file": "target.png",
+  "caption_file": "caption.txt",
+  "trigger": "niteos_archlight"
+}

@@ -1,0 +1,15 @@
+{
+  "source_kind": "mvp_fixture",
+  "project_id": "",
+  "history_id": "",
+  "vote": "like",
+  "quality": "good",
+  "scenario_id": "theater_projectors_columns",
+  "scenario_name": "theater_projectors_columns",
+  "id": "fixture_theater_projectors_columns_0e4123dd5a",
+  "split": "train",
+  "source_file": "",
+  "target_file": "target.png",
+  "caption_file": "caption.txt",
+  "trigger": "niteos_archlight"
+}

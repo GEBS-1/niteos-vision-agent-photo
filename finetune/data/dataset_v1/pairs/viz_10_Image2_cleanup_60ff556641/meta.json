@@ -1,0 +1,16 @@
+{
+  "source_kind": "viz_example",
+  "project_id": "",
+  "history_id": "",
+  "vote": "like",
+  "quality": "good",
+  "scenario_id": "viz_example",
+  "scenario_name": "viz_example",
+  "orig_name": "10_Image2_cleanup.png",
+  "id": "viz_10_Image2_cleanup_60ff556641",
+  "split": "train",
+  "source_file": "",
+  "target_file": "target.png",
+  "caption_file": "caption.txt",
+  "trigger": "niteos_archlight"
+}

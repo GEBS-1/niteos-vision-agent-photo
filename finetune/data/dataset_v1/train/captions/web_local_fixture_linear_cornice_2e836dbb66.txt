@@ -1,0 +1,1 @@
+niteos_archlight, night architectural facade lighting visualization, scenario Projectors up-down (fixture), Night facade with up-down projector accents on piers, no contour LED crown., keep building geometry 1:1, no new pilasters or columns, preserve signs and plaques, architectural facade lighting only

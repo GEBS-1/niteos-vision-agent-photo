@@ -1,0 +1,58 @@
+{
+  "total": 55,
+  "by_kind": {
+    "project_final": 1,
+    "mvp_fixture": 30,
+    "viz_example": 20,
+    "web_ref": 4
+  },
+  "by_vote": {
+    "none": 1,
+    "like": 54
+  },
+  "by_split": {
+    "train": 48,
+    "val": 7
+  },
+  "scenarios": 31,
+  "scenario_ids": [
+    "administrative_horizontal_lines",
+    "business_center_linear_cornice",
+    "car_showroom_linear_contour",
+    "church_projectors_architecture",
+    "historic_building_projectors",
+    "hotel_combined",
+    "industrial_vertical_wash",
+    "linear_cornice",
+    "linear_horizontal",
+    "linear_mix_ch",
+    "linear_mix_cv",
+    "linear_mix_full",
+    "linear_mix_hv",
+    "linear_top_bottom",
+    "linear_vertical",
+    "park_entrance",
+    "park_row",
+    "park_wide",
+    "residential_combined",
+    "restaurant_projectors_columns",
+    "shopping_center_vertical_lines",
+    "small_office_projectors",
+    "sports_complex_projectors_wash",
+    "theater_projectors_columns",
+    "university_combined",
+    "viz_example",
+    "warehouse_linear_contour",
+    "xray_columns",
+    "xray_graze",
+    "xray_openings",
+    "xray_wash"
+  ],
+  "good_pairs": 54,
+  "out_dir": "D:\\Python\\Github\\niteos_concept_light_v140_rgbw_neutral_fix\\finetune\\data\\dataset_v1",
+  "cloud_dir": "D:\\Python\\Github\\niteos_concept_light_v140_rgbw_neutral_fix\\cloud_data",
+  "trigger": "niteos_archlight",
+  "created_at": "2026-07-23T08:02:38.685108Z",
+  "train_images": 48,
+  "pairs": 55
+}

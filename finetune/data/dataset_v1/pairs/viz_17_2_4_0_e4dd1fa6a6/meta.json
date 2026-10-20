@@ -1,0 +1,16 @@
+{
+  "source_kind": "viz_example",
+  "project_id": "",
+  "history_id": "",
+  "vote": "like",
+  "quality": "good",
+  "scenario_id": "viz_example",
+  "scenario_name": "viz_example",
+  "orig_name": "17_2_4.0.jpg",
+  "id": "viz_17_2_4_0_e4dd1fa6a6",
+  "split": "val",
+  "source_file": "",
+  "target_file": "target.png",
+  "caption_file": "caption.txt",
+  "trigger": "niteos_archlight"
+}

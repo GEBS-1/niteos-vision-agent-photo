@@ -1,0 +1,15 @@
+{
+  "source_kind": "mvp_fixture",
+  "project_id": "",
+  "history_id": "",
+  "vote": "like",
+  "quality": "good",
+  "scenario_id": "small_office_projectors",
+  "scenario_name": "small_office_projectors",
+  "id": "fixture_small_office_projectors_db911cb7e3",
+  "split": "train",
+  "source_file": "",
+  "target_file": "target.png",
+  "caption_file": "caption.txt",
+  "trigger": "niteos_archlight"
+}

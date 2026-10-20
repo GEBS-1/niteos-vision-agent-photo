@@ -1,0 +1,15 @@
+{
+  "source_kind": "mvp_fixture",
+  "project_id": "",
+  "history_id": "",
+  "vote": "like",
+  "quality": "good",
+  "scenario_id": "xray_columns",
+  "scenario_name": "xray_columns",
+  "id": "fixture_xray_columns_9557b38631",
+  "split": "train",
+  "source_file": "",
+  "target_file": "target.png",
+  "caption_file": "caption.txt",
+  "trigger": "niteos_archlight"
+}

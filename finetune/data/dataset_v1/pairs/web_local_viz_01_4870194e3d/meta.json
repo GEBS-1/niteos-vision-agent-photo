@@ -1,0 +1,18 @@
+{
+  "source_kind": "web_ref",
+  "project_id": "",
+  "history_id": "",
+  "vote": "like",
+  "quality": "good",
+  "scenario_id": "viz_example",
+  "scenario_name": "Viz example 01",
+  "attribution": "NITEOS viz_examples",
+  "license": "internal",
+  "url": "",
+  "id": "web_local_viz_01_4870194e3d",
+  "split": "train",
+  "source_file": "",
+  "target_file": "target.png",
+  "caption_file": "caption.txt",
+  "trigger": "niteos_archlight"
+}

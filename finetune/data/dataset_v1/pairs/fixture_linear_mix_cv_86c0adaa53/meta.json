@@ -1,0 +1,15 @@
+{
+  "source_kind": "mvp_fixture",
+  "project_id": "",
+  "history_id": "",
+  "vote": "like",
+  "quality": "good",
+  "scenario_id": "linear_mix_cv",
+  "scenario_name": "linear_mix_cv",
+  "id": "fixture_linear_mix_cv_86c0adaa53",
+  "split": "train",
+  "source_file": "",
+  "target_file": "target.png",
+  "caption_file": "caption.txt",
+  "trigger": "niteos_archlight"
+}

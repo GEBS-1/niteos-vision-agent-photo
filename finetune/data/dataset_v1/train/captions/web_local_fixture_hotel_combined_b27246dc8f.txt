@@ -1,0 +1,1 @@
+niteos_archlight, night architectural facade lighting visualization, scenario Hotel combined (fixture), Combined cornice line and vertical accents on classical hotel facade at night., keep building geometry 1:1, no new pilasters or columns, preserve signs and plaques, architectural facade lighting only

@@ -1,0 +1,15 @@
+{
+  "source_kind": "project_final",
+  "project_id": "8e7037c2fd6d",
+  "history_id": "",
+  "vote": "",
+  "quality": "unrated",
+  "scenario_id": "",
+  "scenario_name": "",
+  "id": "final_8e7037c2fd6d_24cb2c5e61",
+  "split": "train",
+  "source_file": "source.png",
+  "target_file": "target.png",
+  "caption_file": "caption.txt",
+  "trigger": "niteos_archlight"
+}

@@ -1,0 +1,18 @@
+{
+  "source_kind": "web_ref",
+  "project_id": "",
+  "history_id": "",
+  "vote": "like",
+  "quality": "good",
+  "scenario_id": "xray_wash",
+  "scenario_name": "Wash linear (fixture)",
+  "attribution": "NITEOS mvp-fixtures",
+  "license": "internal",
+  "url": "",
+  "id": "web_local_fixture_xray_wash_b634ac6657",
+  "split": "val",
+  "source_file": "",
+  "target_file": "target.png",
+  "caption_file": "caption.txt",
+  "trigger": "niteos_archlight"
+}

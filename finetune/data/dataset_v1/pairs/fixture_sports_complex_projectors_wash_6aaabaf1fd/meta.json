@@ -1,0 +1,15 @@
+{
+  "source_kind": "mvp_fixture",
+  "project_id": "",
+  "history_id": "",
+  "vote": "like",
+  "quality": "good",
+  "scenario_id": "sports_complex_projectors_wash",
+  "scenario_name": "sports_complex_projectors_wash",
+  "id": "fixture_sports_complex_projectors_wash_6aaabaf1fd",
+  "split": "train",
+  "source_file": "",
+  "target_file": "target.png",
+  "caption_file": "caption.txt",
+  "trigger": "niteos_archlight"
+}

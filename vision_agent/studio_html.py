@@ -1,0 +1,3538 @@
+# -*- coding: utf-8 -*-
+"""Vision Agent Studio HTML page."""
+
+AGENT_STUDIO_HTML = r"""
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <title>Vision Agent</title>
+  {{THEME_BOOT}}
+  <style>
+    :root,html[data-theme="dark"]{
+      --bg:#070b10;--card:#0f151c;--header:#0a1016;--surface:#0a1016;--surface-2:#121820;--input:#090d12;
+      --line:#2b333d;--line-soft:#2f3a46;--text:#eef2f6;--muted:#9aa6b2;--accent:#f5b942;--accent2:#5a8fd4;
+      --btn:#d8e0ea;--btn-text:#0a1016;--link:#9ec5ff;--bubble-user:#1c334d;--bubble-ai:#17202a;
+      --danger:#f0a0a0;--stage:#030405;--shadow:rgba(0,0,0,.45);
+    }
+    html[data-theme="light"]{
+      --bg:#f3f5f8;--card:#ffffff;--header:#ffffff;--surface:#f7f8fa;--surface-2:#eef1f5;--input:#ffffff;
+      --line:#d5dbe3;--line-soft:#c9d1db;--text:#15202b;--muted:#5c6b7a;--accent:#d97706;--accent2:#2563eb;
+      --btn:#1a2330;--btn-text:#ffffff;--link:#1d4ed8;--bubble-user:#dbeafe;--bubble-ai:#f1f5f9;
+      --danger:#b91c1c;--stage:#e8ecf1;--shadow:rgba(15,23,42,.12);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 Segoe UI,Arial,sans-serif;padding-bottom:78px;transition:background .2s ease,color .2s ease}
+    a{color:var(--link);text-decoration:none}
+    header{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line);background:var(--header);position:relative;z-index:5;flex-wrap:wrap}
+    h1{margin:0;font-size:20px}
+    .muted{color:var(--muted)}
+    .btn{border:0;border-radius:10px;padding:10px 14px;font:inherit;font-weight:700;cursor:pointer;background:var(--btn);color:var(--btn-text);text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+    .btn.secondary{background:var(--surface-2);color:var(--text);border:1px solid var(--line)}
+    .btn.accent{background:linear-gradient(135deg,var(--accent),#e88a12);color:#1a1000}
+    .btn:disabled{opacity:.45;cursor:not-allowed}
+    .theme-toggle{min-width:44px;padding:10px 12px;font-size:13px}
+    .header-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;position:relative;z-index:6;justify-content:flex-end}
+    .sales-hint{max-width:min(380px,56vw);font-size:12px;line-height:1.4;color:var(--muted);text-align:right}
+    .sales-hint a{color:var(--accent);font-weight:700;text-decoration:none;white-space:nowrap}
+    .sales-hint a:hover{text-decoration:underline}
+    .mode-tabs{display:flex;gap:6px;padding:10px 14px 0;margin:0;align-items:center;flex-wrap:wrap;border-bottom:1px solid var(--line);background:var(--header);padding-bottom:10px}
+    .mode-tab{border:1px solid var(--line);background:var(--surface-2);color:var(--muted);border-radius:999px;padding:8px 16px;font:inherit;font-weight:700;cursor:pointer}
+    .mode-tab.active{background:var(--accent);color:#1a1000;border-color:transparent}
+    .mode-hint{font-size:12px;color:var(--muted);margin-left:6px}
+    .scenario-list{display:grid;gap:10px}
+    .scenario{border:1px solid var(--line);border-radius:12px;padding:14px;background:var(--surface);cursor:pointer;text-align:left;color:inherit;font:inherit;width:100%}
+    .scenario:hover{border-color:var(--accent2)}
+    .scenario.active{border-color:var(--accent);box-shadow:0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent)}
+    .scenario b{display:block;margin:0 0 4px;font-size:14px;color:var(--text)}
+    .scenario span{display:block;font-size:12px;color:var(--muted);line-height:1.4}
+    .video-stage video{width:100%;max-height:420px;border-radius:10px;background:var(--stage);border:1px solid var(--line)}
+    .layout{display:grid;grid-template-columns:minmax(220px,.9fr) minmax(340px,1.45fr) minmax(300px,1.05fr);gap:14px;padding:14px;min-height:calc(100vh - 64px)}
+    body.mode-video .layout{grid-template-columns:minmax(280px,1fr) minmax(360px,1.3fr)}
+    body.mode-video .chat-col{display:none!important}
+    body.mode-photo .video-only{display:none!important}
+    body.mode-video .photo-only{display:none!important}
+    .model-row{display:flex;flex-direction:column;gap:4px;margin-top:4px}
+    .model-row label{font-size:12px;color:var(--muted);font-weight:600}
+    .model-row select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--text);font:inherit}
+    .duration-row{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+    .duration-row .duration-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+    .duration-row .duration-top label{font-size:12px;color:var(--muted);font-weight:600}
+    .duration-row .duration-val{font-size:14px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums}
+    .duration-row input[type=range]{
+      width:100%;margin:0;accent-color:#e88a12;height:28px;cursor:pointer;
+    }
+    .duration-row .duration-ends{display:flex;justify-content:space-between;font-size:11px;color:var(--muted)}
+    .support-icon-btn{
+      height:42px;min-width:42px;border-radius:999px;border:1px solid var(--line);background:var(--surface-2);color:var(--text);
+      display:inline-flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;font:inherit;font-weight:800;font-size:13px;
+      padding:0 14px 0 12px;flex-shrink:0;white-space:nowrap;
+    }
+    .support-icon-btn:hover{border-color:var(--accent);color:var(--accent)}
+    .support-icon-btn .phone{font-size:15px;line-height:1}
+    .support-fab{
+      position:fixed;right:14px;bottom:14px;z-index:35;height:48px;min-width:48px;border-radius:999px;
+      border:0;background:linear-gradient(135deg,var(--accent),#e88a12);color:#1a1000;font:inherit;font-weight:800;font-size:14px;
+      cursor:pointer;box-shadow:0 10px 28px rgba(0,0,0,.35);display:inline-flex;align-items:center;gap:8px;padding:0 16px 0 14px;
+    }
+    .support-fab .phone{width:28px;height:28px;border-radius:50%;background:rgba(0,0,0,.12);display:inline-grid;place-items:center;font-size:15px;flex-shrink:0}
+    .support-fab:hover{transform:translateY(-1px);box-shadow:0 12px 32px rgba(0,0,0,.42)}
+    .support-modal{position:fixed;inset:0;z-index:60;display:none;place-items:center;padding:18px;background:rgba(0,0,0,.55)}
+    .support-modal.open{display:grid}
+    .my-projects-card{width:min(560px,100%);max-height:min(82vh,720px);overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px 18px 14px;box-shadow:0 18px 48px rgba(0,0,0,.45)}
+    .my-projects-card h3{margin:0 0 6px;font-size:18px}
+    .my-projects-card .lead{margin:0 0 12px;font-size:13px;color:var(--muted);line-height:1.45}
+    .my-proj-list{display:grid;gap:10px}
+    .my-proj-item{display:grid;grid-template-columns:88px 1fr auto;gap:10px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:8px;background:var(--surface);cursor:pointer;text-align:left;color:inherit;font:inherit;width:100%}
+    .my-proj-item:hover{border-color:var(--accent)}
+    .my-proj-item.active{outline:2px solid var(--accent)}
+    .my-proj-item img,.my-proj-item .ph{width:88px;height:64px;object-fit:cover;border-radius:8px;background:#05070a;display:block}
+    .my-proj-item .ph{display:grid;place-items:center;font-size:11px;color:var(--muted)}
+    .my-proj-item .t{font-weight:700;font-size:13px;margin:0 0 2px}
+    .my-proj-item .m{font-size:11px;color:var(--muted);line-height:1.35}
+    .my-proj-item .tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+    .my-proj-item .tag{font-size:10px;font-weight:700;padding:2px 6px;border-radius:999px;background:#1a2210;color:#d4e8a8;border:1px solid #3a4a22}
+    .my-proj-item .tag.vid{background:#101828;color:#a8c8f0;border-color:#2a3a55}
+    .my-proj-rename{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+    .my-proj-rename input{flex:1 1 160px;min-width:0;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--text);font:inherit}
+    .support-card{width:min(440px,100%);background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:10px}
+    .support-card h3{margin:0;font-size:18px}
+    .support-card .lead{margin:0;color:var(--muted);line-height:1.45;font-size:13px}
+    .support-card textarea,.support-card select,.support-card input{width:100%;border-radius:10px;border:1px solid var(--line);background:var(--input);color:var(--text);padding:10px;font:inherit}
+    .support-card textarea{min-height:110px;resize:vertical}
+    .support-card .contact-box{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border-radius:12px;border:1px solid var(--accent);background:color-mix(in srgb, var(--accent) 12%, transparent)}
+    .support-card .contact-box label{font-size:13px;font-weight:700;color:var(--text);margin:0}
+    .support-card .contact-box .hint{font-size:12px;color:var(--muted);margin:0;line-height:1.4}
+    .support-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+    @media(max-width:520px){
+      .support-icon-btn .label{display:none}
+      .support-icon-btn{padding:0;width:42px}
+      .support-fab .label{display:none}
+      .support-fab{padding:0;width:52px;height:52px;justify-content:center}
+      .support-fab .phone{width:auto;height:auto;background:none;font-size:20px}
+    }
+    .feedback-zone{display:none!important}
+    @media(max-width:1100px){.layout{grid-template-columns:1fr}}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:10px;min-height:0}
+    .card.work-col{border-color:var(--line)}
+    .card.chat-col{border-color:var(--line)}
+    .col-kicker{display:block;width:fit-content;max-width:100%;margin:0;padding:0;border:0;background:none;box-shadow:none;font-size:11px;font-weight:700;letter-spacing:.02em;color:var(--muted);line-height:1.3}
+    .col-kicker.work{color:var(--link)}
+    .col-kicker.chat-label{color:var(--accent)}
+    .card h2{margin:0;font-size:15px}
+    .principle-note{padding:10px 12px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line-soft);font-size:12px;line-height:1.45;color:var(--text)}
+    .principle-note b{color:var(--text)}
+    .max-support-card{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:12px;border:1px solid var(--line-soft);border-bottom:3px solid var(--accent);background:var(--surface);text-decoration:none;color:inherit}
+    .max-support-card:hover{border-color:var(--accent)}
+    .max-support-card img{width:52px;height:52px;border-radius:8px;background:#fff;flex-shrink:0}
+    .max-support-card b{display:block;font-size:13px;color:var(--text);margin:0 0 2px}
+    .max-support-card span{font-size:11px;color:var(--muted);line-height:1.4}
+    .tour-compare{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0 4px}
+    .tour-compare figure{margin:0}
+    .tour-compare img{width:100%;height:88px;object-fit:cover;border-radius:8px;border:1px solid var(--line-soft);background:var(--stage);display:block}
+    .tour-compare figcaption{font-size:10px;color:var(--muted);margin-top:4px;text-align:center}
+    .tour-demo-img{width:100%;max-height:120px;object-fit:cover;border-radius:8px;border:1px solid var(--line-soft);margin:8px 0 4px;display:block}
+    .preview{width:100%;border-radius:10px;background:var(--stage);border:1px solid var(--line);object-fit:contain;max-height:280px}
+    .preview.lg{max-height:520px;min-height:280px}
+    .tags{display:flex;flex-wrap:wrap;gap:6px}
+    .tag{padding:4px 8px;border-radius:999px;background:var(--surface-2);border:1px solid var(--line-soft);font-size:12px;color:var(--text)}
+    .meta{font-size:12px;color:var(--muted);line-height:1.4}
+    .chat{flex:1;overflow:auto;display:flex;flex-direction:column;gap:8px;padding:4px;min-height:280px;max-height:55vh}
+    .bubble{padding:8px 10px;border-radius:10px;max-width:95%;white-space:pre-wrap}
+    .bubble.user{align-self:flex-end;background:var(--bubble-user)}
+    .bubble.assistant{align-self:flex-start;background:var(--bubble-ai);border:1px solid var(--line-soft)}
+    .chat-input{display:flex;flex-direction:column;gap:8px}
+    textarea,select,input[type=text],input:not([type]){width:100%;min-height:auto;resize:vertical;border-radius:10px;border:1px solid var(--line);background:var(--input);color:var(--text);padding:10px;font:inherit}
+    textarea{min-height:72px}
+    .quick{display:flex;flex-wrap:wrap;gap:6px}
+    .quick button{font-size:12px;padding:7px 10px;transition:outline .15s,background .15s,border-color .15s,opacity .15s,transform .15s}
+    .quick-group{display:none;flex-wrap:wrap;gap:6px;width:100%;padding:8px;border-radius:12px;border:1px dashed transparent;background:transparent}
+    .quick-group.open{display:flex}
+    .quick-group.for-brush{border-color:rgba(255,107,107,.45);background:rgba(255,70,70,.08)}
+    .quick-group.for-eraser{border-color:rgba(79,209,197,.45);background:rgba(79,209,197,.08)}
+    .quick-group .group-label{width:100%;font-size:11px;color:var(--muted);margin:0 0 2px}
+    .quick button.lit-brush{background:rgba(255,70,70,.22);border-color:#ff6b6b;color:#ffd0d0;outline:2px solid rgba(255,107,107,.55);outline-offset:1px;transform:translateY(-1px)}
+    .quick button.lit-eraser{background:rgba(79,209,197,.2);border-color:#4fd1c5;color:#c8fff8;outline:2px solid rgba(79,209,197,.55);outline-offset:1px;transform:translateY(-1px)}
+    .quick button.dim{opacity:.38}
+    .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .status{padding:8px 10px;border-radius:10px;background:var(--surface-2);border:1px solid var(--line);font-size:12px}
+    .status.busy{border-color:var(--accent);color:var(--accent)}
+    .status.err{border-color:var(--danger);color:var(--danger)}
+    .hist{display:flex;gap:8px;overflow:auto;padding-bottom:4px}
+    .hist img{width:72px;height:54px;object-fit:cover;border-radius:8px;border:1px solid var(--line);cursor:pointer}
+    .hist-item{flex:0 0 auto;width:128px;border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:5px;cursor:pointer;color:var(--muted);font-size:10px;text-align:left;position:relative}
+    .hist-item.active{border-color:var(--accent);box-shadow:0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent)}
+    .hist-item .hist-thumb{position:relative;width:100%;height:62px;margin-bottom:4px;border-radius:6px;overflow:hidden;background:var(--stage)}
+    .hist-item .hist-thumb img{width:100%;height:100%;object-fit:cover;display:block;border:0;margin:0}
+    .hist-item .hist-thumb .hist-ann{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;mix-blend-mode:normal;opacity:.95}
+    .hist-item .hist-markup-tag{margin-top:2px;color:#4fd1c5;font-weight:700}
+    .hist-item span{display:block;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .sales-hint a.phone-copy{color:var(--accent);text-decoration:underline;cursor:pointer;border:0;background:none;font:inherit;padding:0}
+    .sales-hint a.phone-copy:hover{color:var(--text)}
+    .hist-item .hist-vote{margin-top:3px;font-weight:700;white-space:normal}
+    .hist-item .hist-vote.like{color:#8fd48f}
+    .hist-item .hist-vote.dislike{color:#e89a9a}
+    .hist-item .hist-vote.pending{color:var(--accent)}
+    .hist-item .hist-comment{margin-top:2px;white-space:normal;max-height:2.5em;overflow:hidden}
+    .hist-hint{font-size:12px;color:var(--muted);margin:0}
+    input[type=file]{width:100%;font:inherit;color:var(--muted)}
+    .hidden{display:none!important}
+    .dropzone{border:1.5px dashed var(--line-soft);border-radius:12px;padding:14px;background:var(--surface);cursor:pointer;transition:border-color .15s,background .15s;text-align:center}
+    .dropzone:hover,.dropzone:focus{border-color:var(--accent);outline:none}
+    .dropzone.dragover{border-color:var(--accent);background:var(--surface-2)}
+    .dropzone.has-image{padding:8px;text-align:left}
+    .dropzone .hint{font-size:13px;color:var(--muted);line-height:1.45}
+    .dropzone .hint strong{color:var(--text);font-weight:700}
+    .dropzone .hint kbd{display:inline-block;padding:1px 6px;border:1px solid var(--line-soft);border-radius:6px;background:var(--surface-2);font:12px Consolas,monospace;color:var(--text)}
+    .dropzone .preview{max-height:220px;margin-top:8px;display:none}
+    .dropzone.has-image .preview{display:block}
+    .dropzone.has-image .hint{display:none}
+    .drop-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:2px}
+    .result-stage{position:relative;border:1px solid var(--line);border-radius:12px;background:var(--stage);min-height:280px;max-height:520px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+    .result-stage img{max-width:100%;max-height:520px;width:auto;height:auto;object-fit:contain;border:0;border-radius:0;pointer-events:none;user-select:none}
+    .result-stage canvas{position:absolute;left:0;top:0;touch-action:none;cursor:crosshair;z-index:2;pointer-events:none}
+    .result-stage.is-editing canvas.tool-on{pointer-events:auto}
+    .result-stage.is-editing{outline:2px solid #5a8fd4;outline-offset:1px}
+    .video-panel{display:none}
+    .markup-bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+    .markup-bar .btn.active{outline:2px solid var(--accent);outline-offset:1px}
+    .markup-bar .btn.active.brush{outline-color:#ff6b6b}
+    .markup-bar .btn.active.eraser{outline-color:#4fd1c5}
+    .markup-bar .brush-size{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+    .markup-bar .brush-size input{width:100px}
+    .markup-next-step{display:none;margin-top:8px;padding:10px 12px;border:1px solid #3a6a78;border-radius:12px;background:#0d1a20;color:#d7eef4;font-size:13px;line-height:1.45}
+    .markup-next-step.open{display:block;animation:niteosPulseBorder 1.4s ease-in-out 2}
+    .markup-next-step b{color:#fff}
+    .markup-next-step .step-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+    .chat-col.awaiting-instruction{border-color:#4fd1c5;box-shadow:0 0 0 2px rgba(79,209,197,.28);animation:niteosPulseBorder 1.4s ease-in-out 3}
+    .chat-step-panel{display:none;padding:12px 14px;border-radius:14px;border:2px solid #4fd1c5;background:linear-gradient(180deg,#102428 0%,#0d1a20 100%);color:#e7f7fa;margin:0 0 10px}
+    .chat-step-panel.open{display:block}
+    .chat-step-panel .step-kicker{margin:0 0 4px;font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:#4fd1c5}
+    .chat-step-panel h3{margin:0 0 8px;font-size:17px;color:#fff;line-height:1.3}
+    .chat-step-panel ol{margin:0;padding-left:18px;color:#d7eef4;font-size:13px;line-height:1.55}
+    .chat-step-panel ol b{color:#fff}
+    .chat-step-panel .step-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+    .quick.awaiting{padding:10px;border-radius:14px;border:1px solid #3a6a78;background:#0a1418}
+    .quick.awaiting .quick-empty-hint{display:none}
+    .chat-input.needs-instruction{outline:2px solid #4fd1c5;outline-offset:2px;border-radius:12px}
+    .chat-input.needs-instruction textarea{border-color:#4fd1c5;box-shadow:0 0 0 3px rgba(79,209,197,.18)}
+    .chat-input .input-step-label{display:none;margin:0 0 4px;font-size:12px;font-weight:700;color:#4fd1c5}
+    .chat-input.needs-instruction .input-step-label{display:block}
+    .feedback-zone.blocking{border-color:#f5b942;box-shadow:0 0 0 3px rgba(245,185,66,.28)}
+    .feedback-gate{position:fixed;inset:0;z-index:120;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(2,6,10,.82)}
+    .feedback-gate.open{display:flex}
+    .feedback-gate-card{max-width:440px;width:100%;background:#101820;border:2px solid #f5b942;border-radius:18px;padding:22px 20px 18px;box-shadow:0 24px 60px rgba(0,0,0,.55);text-align:center}
+    .feedback-gate-card h3{margin:0 0 8px;font-size:22px;color:#fff;line-height:1.25}
+    .feedback-gate-card p{margin:0 0 16px;color:var(--muted);font-size:14px;line-height:1.5}
+    .feedback-gate-card .gate-pending{margin:0 0 14px;padding:10px 12px;border-radius:10px;background:#1a2410;border:1px solid #3d5a20;color:#c8f0a0;font-size:13px;font-weight:700;line-height:1.4}
+    .feedback-gate-card .gate-pending.hidden{display:none}
+    .feedback-gate-card .gate-comment-wrap{margin:0 0 14px;text-align:left}
+    .feedback-gate-card .gate-comment-wrap label{display:block;margin:0 0 6px;font-size:12px;color:var(--muted)}
+    .feedback-gate-card .gate-comment-wrap textarea{width:100%;min-height:72px;resize:vertical;border-radius:10px;border:1px solid #3a4654;background:#090d12;color:var(--text);padding:10px;font:inherit}
+    .feedback-gate-votes{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:0 0 12px}
+    .feedback-gate-votes .btn{min-width:140px;font-size:15px;font-weight:800;padding:12px 16px}
+    .feedback-gate-votes .btn.like{border-color:#3d8f5a;background:#1f3d2a;color:#c8f0d4}
+    .feedback-gate-votes .btn.dislike{border-color:#c45;background:#3d1f24;color:#f0c0c0}
+    .feedback-gate-votes .btn:disabled{opacity:.55;cursor:wait}
+    .feedback-gate-status{min-height:18px;margin:0 0 8px;font-size:13px;color:var(--accent)}
+    .feedback-gate-status.err{color:#f0a0a0}
+    .feedback-gate-cancel{border:0;background:transparent;color:#8d97a3;font:inherit;font-size:13px;cursor:pointer;text-decoration:underline;padding:6px}
+    .feedback-gate-cancel:hover{color:#c9d5e0}
+    @keyframes niteosPulseBorder{0%,100%{box-shadow:0 0 0 0 rgba(79,209,197,.0)}50%{box-shadow:0 0 0 4px rgba(79,209,197,.25)}}
+    .legend{font-size:12px;color:var(--muted);line-height:1.45}
+    .legend b.red,.principle-note b.red{color:#ff6b6b}
+    .legend b.cyan,.principle-note b.cyan{color:#4fd1c5}
+    .help-btn-promo{border:0;border-radius:10px;padding:10px 14px;font:inherit;font-weight:800;cursor:pointer;background:linear-gradient(135deg,#f5b942,#e88a12);color:#1a1000;text-decoration:none;display:inline-flex;align-items:center}
+    .tour-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.62);z-index:90;display:none;align-items:center;justify-content:center;padding:18px}
+    .tour-backdrop.open{display:flex}
+    .tour-modal{max-width:480px;width:100%;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 20px 50px var(--shadow)}
+    .tour-modal h3{margin:0 0 8px;font-size:18px}
+    .tour-modal p{margin:0 0 10px;color:var(--muted);line-height:1.5}
+    .tour-modal ol{margin:0 0 14px;padding-left:18px;color:#dbe4ee;line-height:1.55}
+    .tour-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+    .coach-root{position:fixed;inset:0;z-index:110;display:none;pointer-events:none}
+    .coach-root.open{display:block;pointer-events:none}
+    .coach-shade{position:absolute;inset:0;background:rgba(3,6,10,.78);pointer-events:none}
+    .coach-hole{position:absolute;border-radius:14px;box-shadow:0 0 0 9999px rgba(3,6,10,.78),0 0 0 3px rgba(245,185,66,.95),0 0 28px rgba(245,185,66,.35);pointer-events:none;transition:top .2s,left .2s,width .2s,height .2s}
+    .coach-card{position:fixed;z-index:112;width:min(400px,calc(100vw - 24px));background:#101820;border:1px solid #3a4654;border-radius:16px;padding:14px 14px 12px;box-shadow:0 18px 40px rgba(0,0,0,.5);color:var(--text);pointer-events:auto}
+    .coach-card .step-n{font-size:11px;color:var(--accent);font-weight:800;letter-spacing:.04em;margin:0 0 4px;text-transform:uppercase}
+    .coach-card h3{margin:0 0 6px;font-size:16px}
+    .coach-card p{margin:0 0 10px;color:var(--muted);font-size:13px;line-height:1.5}
+    .coach-card ol{margin:0 0 12px;padding-left:18px;color:#dbe4ee;font-size:13px;line-height:1.5}
+    .coach-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+    .tour-pulse{animation:tourPulse 1.2s ease-in-out infinite}
+    @keyframes tourPulse{0%,100%{box-shadow:0 0 0 0 rgba(245,185,66,.55)}50%{box-shadow:0 0 0 8px rgba(245,185,66,0)}}
+    .tour-target-live{position:relative;z-index:91!important}
+    .busy-overlay.tour-demo{z-index:100;pointer-events:none}
+    .feedback-zone{border:1px solid var(--line);border-radius:14px;padding:12px;background:var(--surface);display:none;flex-direction:column;gap:8px}
+    .feedback-zone.open{display:flex}
+    .feedback-zone.required{border-color:var(--accent);box-shadow:0 0 0 2px rgba(245,185,66,.22)}
+    .feedback-votes{display:flex;gap:8px;flex-wrap:wrap}
+    .feedback-votes button.active.like{background:#1f3d2a;border-color:#3d8f5a;color:#c8f0d4}
+    .feedback-votes button.active.dislike{background:#3d1f24;border-color:#c45;color:#f0c0c0}
+    .feedback-zone select,.feedback-zone input{width:100%;border-radius:10px;border:1px solid var(--line);background:var(--input);color:var(--text);padding:10px;font:inherit}
+    .feedback-toast{position:fixed;right:16px;bottom:88px;z-index:80;width:min(320px,calc(100vw - 28px));background:rgba(12,16,22,.96);border:1px solid #3a4552;border-radius:14px;padding:14px;box-shadow:0 12px 36px rgba(0,0,0,.45)}
+    .feedback-toast.hidden{display:none}
+    .feedback-toast-title{margin:0 0 4px;font-size:15px;font-weight:700}
+    .feedback-toast-lead{margin:0 0 10px;font-size:12px;color:var(--muted);line-height:1.45}
+    .feedback-toast-actions{display:flex;gap:8px;flex-wrap:wrap}
+    .feedback-toast-close{position:absolute;top:8px;right:10px;border:0;background:transparent;color:#8d97a3;font-size:18px;cursor:pointer}
+    .busy-overlay{position:fixed;inset:0;background:rgba(4,8,12,.72);z-index:95;display:none;align-items:center;justify-content:center;padding:18px}
+    .busy-overlay.open{display:flex}
+    .busy-modal{max-width:420px;width:100%;background:var(--card);border:1px solid var(--line-soft);border-radius:16px;padding:22px 20px;text-align:center;box-shadow:0 20px 50px var(--shadow)}
+    .busy-modal h3{margin:0 0 8px;font-size:18px;color:var(--text)}
+    .busy-modal p{margin:0;color:var(--muted);line-height:1.5}
+    .busy-spinner{width:36px;height:36px;margin:0 auto 14px;border:3px solid #2b333d;border-top-color:var(--accent);border-radius:50%;animation:niteosSpin .8s linear infinite}
+    .busy-steps{display:flex;gap:8px;justify-content:center;margin:0 0 14px;flex-wrap:wrap}
+    .busy-step{font-size:11px;font-weight:700;letter-spacing:.03em;padding:5px 10px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+    .busy-step.on{border-color:var(--accent);color:#ffe6a8;background:#2a2418}
+    .busy-step.done{border-color:#3d5a3d;color:#8fd48f}
+    .video-progress{display:none;margin:0 0 10px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--surface);font-size:13px;line-height:1.45}
+    .video-progress.open{display:block}
+    .video-progress b{color:var(--accent)}
+    .video-stage{position:relative}
+    .video-stage .video-still-preview{display:none;width:100%;max-height:420px;object-fit:contain;border-radius:10px;background:var(--stage);border:1px solid var(--line)}
+    .video-stage.waiting-video .video-still-preview{display:block}
+    .video-stage.waiting-video #resultVideo{display:none!important}
+    .video-stage.waiting-video #videoEmptyHint{display:none!important}
+    @keyframes niteosSpin{to{transform:rotate(360deg)}}
+    .card-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+    .tip{position:relative;display:inline-flex;align-items:center;vertical-align:middle}
+    .tip-btn{width:22px;height:22px;border-radius:999px;border:1px solid #3a4654;background:#151c26;color:#c9d5e0;font:700 12px/1 Segoe UI,Arial,sans-serif;cursor:pointer;padding:0}
+    .tip-btn:hover,.tip.open .tip-btn{border-color:var(--accent);color:var(--accent)}
+    .tip-bubble{display:none;position:absolute;z-index:40;left:0;top:calc(100% + 8px);width:min(280px,70vw);background:#101820;border:1px solid #3a4654;border-radius:12px;padding:10px 12px;color:#dbe4ee;font-size:12px;line-height:1.45;box-shadow:0 12px 28px rgba(0,0,0,.4)}
+    .tip.open .tip-bubble{display:block}
+    .tip-bubble.right{left:auto;right:0}
+    .photo-checklist{margin:0;padding-left:18px;color:#dbe4ee;line-height:1.55;font-size:13px}
+    .photo-checklist li{margin:0 0 6px}
+    .warn-note{padding:10px 12px;border-radius:10px;background:#1a1510;border:1px solid #5a4630;color:#f0d2a0;font-size:12px;line-height:1.45}
+    .guide-strip{display:flex;flex-wrap:wrap;gap:8px;padding:10px 12px;border-radius:12px;background:var(--surface);border:1px dashed var(--line-soft);font-size:12px;color:var(--muted);line-height:1.4}
+    .guide-strip b{color:var(--text)}
+    .guide-step{flex:1 1 140px;min-width:120px}
+    .tour-ghost-cursor{position:fixed;z-index:113;width:16px;height:16px;border-radius:50% 0 50% 50%;background:var(--accent);pointer-events:none;transform:rotate(-35deg);box-shadow:0 2px 10px rgba(0,0,0,.45);opacity:0;transition:top .45s ease,left .45s ease,opacity .2s}
+    .tour-ghost-cursor.on{opacity:1}
+    .tour-action-chip{display:inline-flex;align-items:center;gap:6px;margin:0 0 8px;padding:5px 10px;border-radius:999px;background:#1a2410;border:1px solid #3d5a20;color:#c8f0a0;font-size:11px;font-weight:700}
+    .tour-compare.live{position:relative}
+    .tour-compare.live figure{position:relative}
+    .tour-morph{position:relative;width:100%;height:110px;border-radius:8px;overflow:hidden;border:1px solid #3a4654;background:#05070a;margin:8px 0}
+    .tour-morph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+    .tour-morph img.after{opacity:0;animation:tourMorph 2.4s ease-in-out infinite alternate}
+    @keyframes tourMorph{0%,35%{opacity:0}65%,100%{opacity:1}}
+    .tour-morph .labels{position:absolute;left:8px;bottom:8px;z-index:2;display:flex;gap:6px}
+    .tour-morph .labels span{font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px;background:rgba(0,0,0,.65);color:#fff}
+    .dropzone.tour-demo-flash{border-color:var(--accent)!important;background:#151c10!important;animation:tourPulse 1s ease-in-out 2}
+    .btn.tour-click-flash{animation:tourClickFlash .7s ease 2}
+    @keyframes tourClickFlash{0%,100%{filter:none}40%{filter:brightness(1.25);transform:scale(1.04)}}
+    .result-stage.tour-playing{outline:2px solid var(--accent);outline-offset:1px}
+    .zone-intent-overlay{position:fixed;inset:0;z-index:98;display:none;align-items:flex-end;justify-content:center;padding:16px;background:rgba(4,8,12,.45);backdrop-filter:blur(2px)}
+    .zone-intent-overlay.open{display:flex}
+    .zone-intent-card{width:min(460px,100%);background:#101820;border:1px solid #3a4654;border-radius:16px;padding:16px;box-shadow:0 18px 48px rgba(0,0,0,.5);margin-bottom:max(12px,env(safe-area-inset-bottom))}
+    .zone-intent-card h3{margin:0 0 6px;font-size:17px;color:var(--text)}
+    .zone-intent-card .lead{margin:0 0 12px;font-size:13px;color:var(--muted);line-height:1.45}
+    .zone-intent-presets{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
+    .zone-intent-presets .btn{font-size:12px;padding:8px 10px}
+    .zone-intent-card textarea{width:100%;min-height:78px;border-radius:10px;border:1px solid var(--line);background:#090d12;color:var(--text);padding:10px;font:inherit;resize:vertical}
+    .zone-intent-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+    .zone-intent-actions .btn{flex:1 1 120px}
+  
+    /* PHOTO-ONLY HANDOFF */
+    .mode-tabs,.video-only,#modeVideoTab,#makeVideoFromPhotoBtn,#videoSourceCard{display:none!important}
+    body.mode-video{ /* force stay photo */ }
+
+  </style>
+</head>
+<body class="mode-photo">
+{{MAX_GROUP_WIDGET}}
+<div class="busy-overlay" id="busyOverlay" aria-live="polite">
+  <div class="busy-modal">
+    <div class="busy-spinner" aria-hidden="true"></div>
+    <div class="busy-steps" id="busySteps" aria-hidden="true">
+      <span class="busy-step" id="busyStep1">1 · Ночь + свет</span>
+      <span class="busy-step" id="busyStep2">2 · Видео</span>
+    </div>
+    <h3 id="busyTitle">Идёт генерация</h3>
+    <p id="busyText">Подождите, агент обрабатывает запрос…</p>
+  </div>
+</div>
+<div class="zone-intent-overlay" id="zoneIntentOverlay" role="dialog" aria-modal="true" aria-labelledby="zoneIntentTitle">
+  <div class="zone-intent-card">
+    <h3 id="zoneIntentTitle">Что сделать с этой зоной?</h3>
+    <p class="lead" id="zoneIntentLead">Зона отмечена на фото. Выберите действие или напишите своими словами — отправим правку сразу отсюда.</p>
+    <div class="zone-intent-presets" id="zoneIntentPresets">
+      <button type="button" class="btn secondary" data-intent="remove" onclick="pickZoneIntent('убери ТОЛЬКО отмеченные светильники и лучи в этой зоне, остальные не трогай; стену восстанови как у соседних панелей')">Убрать свет</button>
+      <button type="button" class="btn secondary" data-intent="place" onclick="pickZoneIntent('проставь прожектор X-RAY только в отмеченной зоне, размер корпуса как у соседних архитектурных прожекторов, луч реалистичный; остальной фасад не трогай')">Поставить прожектор</button>
+      <button type="button" class="btn secondary" data-intent="linear" onclick="pickZoneIntent('проставь линейный светильник MAGISTRAL только в отмеченной зоне по архитектурной линии; остальной фасад не трогай')">Поставить линейный</button>
+      <button type="button" class="btn secondary" data-intent="change" onclick="pickZoneIntent('измени ТОЛЬКО отмеченные светильники в этой зоне, остальные не трогай')">Изменить</button>
+      <button type="button" class="btn secondary" data-intent="warmer" onclick="pickZoneIntent('сделай отмеченные лучи теплее и мягче, остальные светильники не трогай')">Теплее</button>
+    </div>
+    <label class="muted" for="zoneIntentInput" style="display:block;margin:0 0 6px;font-size:12px">Или напишите сами:</label>
+    <textarea id="zoneIntentInput" placeholder="Например: сюда прожектор у входа; убери верхний луч…"></textarea>
+    <div class="zone-intent-actions">
+      <button type="button" class="btn secondary" onclick="closeZoneIntentPanel(false)">Ещё рисую</button>
+      <button type="button" class="btn secondary" onclick="clearEditMarkup(); closeZoneIntentPanel(true)">Сбросить зону</button>
+      <button type="button" class="btn accent" id="zoneIntentSendBtn" onclick="submitZoneIntent()">Отправить правку</button>
+    </div>
+  </div>
+</div>
+<div class="tour-backdrop" id="photoCheckModal" role="dialog" aria-label="Проверка фото перед генерацией">
+  <div class="tour-modal">
+    <h3>Проверьте фото перед генерацией</h3>
+    <p>Лучше всего подходит <b style="color:#eef2f6">дневной фронтальный снимок фасада</b> без лишнего.</p>
+    <ul class="photo-checklist">
+      <li>Нет чужих надписей, водяных знаков, стрелок и рамок поверх здания</li>
+      <li>Фасад целиком в кадре, без сильного наклона и сильных бликов</li>
+      <li>Не ночной уже готовый рендер — исходник лучше дневной</li>
+      <li>Без людей/машин на переднем плане, закрывающих стены</li>
+    </ul>
+    <div class="warn-note" style="margin:12px 0">Если на фото есть надписи или чужой водяной знак — лучше загрузить чистое фото. Иначе агент может сохранить их в результате.</div>
+    <div class="tour-actions">
+      <button type="button" class="btn secondary" onclick="closePhotoCheck()">Отмена</button>
+      <button type="button" class="btn secondary" onclick="closePhotoCheck(); document.getElementById('pickFileBtn').click()">Другое фото</button>
+      <button type="button" class="btn accent" onclick="confirmPhotoCheckAndStart()">Всё ок, генерировать</button>
+    </div>
+  </div>
+</div>
+<header>
+  <div>
+    <h1>Vision Agent</h1>
+    <div class="muted" id="projectLabel">Новый проект</div>
+  </div>
+  <div class="header-actions row">
+    <button type="button" class="btn secondary" id="myProjectsBtn" onclick="openMyProjects()" title="Ваши проекты">Мои проекты</button>
+    <button type="button" class="support-icon-btn" id="supportIconBtn" onclick="openSupportModal()" title="Поддержка — напишите нам" aria-label="Поддержка"><span class="phone" aria-hidden="true">☎</span><span class="label">Поддержка</span></button>
+    <button type="button" class="btn secondary theme-toggle" id="themeToggleBtn" onclick="toggleNiteosTheme()" title="Светлая / тёмная тема" aria-label="Переключить тему">Тема</button>
+    <div class="sales-hint">Хотите узнать подробнее о цене этой концепции — номер <a href="#" class="phone-copy" id="contactPhoneLink" data-phone="8 843 202 21 39" onclick="return copyContactPhone(event)">8 843 202 21 39</a> <span class="muted" id="phoneCopyHint" style="display:none">скопировано</span></div>
+    <button type="button" class="help-btn-promo" id="helpBtnPromo" onclick="openStudioTour()">Как это работает?</button>
+    <button class="btn secondary" id="newProjectTour" onclick="createProject()">Новый проект</button>
+  </div>
+</header>
+<div class="mode-tabs" role="tablist" aria-label="Режим студии">
+  <button type="button" class="mode-tab active" id="modePhotoTab" onclick="setStudioMode('photo')">Фото</button>
+  <button type="button" class="mode-tab" id="modeVideoTab" onclick="setStudioMode('video')">Видео</button>
+  <span class="mode-hint" id="modeHint">Загрузите фото фасада → получите ночную концепцию → правки в этом окне</span>
+</div>
+
+<div class="tour-backdrop" id="studioTour" role="dialog" aria-label="Обучение AI-студии" style="display:none">
+  <!-- Legacy modal kept unused; interactive coach tour is primary -->
+  <div class="tour-modal">
+    <h3 id="tourTitle">Как работает AI-агент</h3>
+    <div id="tourBody"></div>
+    <div class="tour-actions">
+      <button type="button" class="btn secondary" id="tourPrevBtn" onclick="prevStudioTour()">← Назад</button>
+      <button type="button" class="btn secondary" onclick="closeStudioTour()">Закрыть</button>
+      <button type="button" class="btn accent" id="tourNextBtn" onclick="nextStudioTour()">Далее →</button>
+    </div>
+  </div>
+</div>
+<div class="coach-root" id="coachRoot" aria-live="polite">
+  <div class="coach-shade" id="coachShade" onclick="/* keep open */"></div>
+  <div class="coach-hole" id="coachHole"></div>
+  <div class="coach-card" id="coachCard">
+    <div class="step-n" id="coachStepN">Шаг 1 из 8</div>
+    <h3 id="coachTitle">Заголовок</h3>
+    <div id="coachBody"></div>
+    <div class="coach-actions">
+      <button type="button" class="btn secondary" id="coachPrevBtn" onclick="prevStudioTour()">← Назад</button>
+      <button type="button" class="btn secondary" onclick="closeStudioTour()">Закрыть</button>
+      <button type="button" class="btn accent" id="coachNextBtn" onclick="nextStudioTour()">Далее →</button>
+    </div>
+  </div>
+</div>
+
+<div class="feedback-gate" id="feedbackGate" role="dialog" aria-modal="true" aria-labelledby="feedbackGateTitle">
+  <div class="feedback-gate-card">
+    <h3 id="feedbackGateTitle">Поставьте оценку</h3>
+    <p id="feedbackGateLead">Без оценки нельзя продолжить: ни генерацию, ни новый проект.</p>
+    <div class="gate-pending hidden" id="feedbackGatePending">После оценки сразу продолжим ваш запрос.</div>
+    <div class="gate-comment-wrap">
+      <label for="feedbackGateComment">Комментарий <span style="font-weight:400">(необязательно)</span></label>
+      <textarea id="feedbackGateComment" placeholder="Что понравилось или что улучшить — по желанию"></textarea>
+    </div>
+    <div class="feedback-gate-votes">
+      <button type="button" class="btn like" id="feedbackGateLikeBtn" onclick="submitFeedbackFromGate('like')">Нравится</button>
+      <button type="button" class="btn dislike" id="feedbackGateDislikeBtn" onclick="submitFeedbackFromGate('dislike')">Не нравится</button>
+    </div>
+    <div class="feedback-gate-status" id="feedbackGateStatus"></div>
+    <button type="button" class="feedback-gate-cancel" id="feedbackGateCancelBtn" onclick="cancelFeedbackGate()">Отмена — вернуться назад</button>
+  </div>
+</div>
+
+<div class="support-modal" id="supportModal" role="dialog" aria-modal="true" aria-labelledby="supportModalTitle">
+  <div class="support-card">
+    <h3 id="supportModalTitle">☎ Поддержка</h3>
+    <p class="lead" id="supportUserLine">Напишите нам — поможем с ошибкой, вопросом или идеей. Если вы в MAX, имя подставится само.</p>
+    <label class="muted" for="supportKind" style="font-size:12px">Тема</label>
+    <select id="supportKind">
+      <option value="defect">Недочёт / ошибка</option>
+      <option value="idea">Предложение</option>
+      <option value="question">Вопрос</option>
+      <option value="other">Другое</option>
+    </select>
+    <textarea id="supportMessage" placeholder="Напишите, чем помочь…"></textarea>
+    <div class="contact-box">
+      <label for="supportContact">Ваш телефон или email</label>
+      <p class="hint">Оставьте контакт — мы сможем написать вам в ответ, если понадобится.</p>
+      <input id="supportContact" type="text" placeholder="Например: +7… или email@" autocomplete="tel">
+    </div>
+    <div class="muted" id="supportStatus"></div>
+    <div class="support-actions">
+      <button type="button" class="btn secondary" onclick="closeSupportModal()">Закрыть</button>
+      <button type="button" class="btn accent" id="supportSendBtn" onclick="submitSupportMessage()">Отправить в поддержку</button>
+    </div>
+  </div>
+</div>
+<div class="support-modal" id="myProjectsModal" role="dialog" aria-modal="true" aria-labelledby="myProjectsTitle">
+  <div class="my-projects-card">
+    <h3 id="myProjectsTitle">Мои проекты</h3>
+    <p class="lead">Фото и видео по проектам. Откройте любой — внутри будет история версий с оценками.</p>
+    <div class="my-proj-rename">
+      <input id="projectRenameInput" type="text" maxlength="80" placeholder="Имя текущего проекта" aria-label="Имя проекта">
+      <button type="button" class="btn secondary" onclick="renameCurrentProject()">Сохранить имя</button>
+    </div>
+    <div class="muted" id="myProjectsStatus" style="margin:8px 0"></div>
+    <div class="my-proj-list" id="myProjectsList"></div>
+    <div class="support-actions" style="margin-top:14px">
+      <button type="button" class="btn secondary" onclick="closeMyProjects()">Закрыть</button>
+      <button type="button" class="btn accent" onclick="closeMyProjects(); createProject()">Новый проект</button>
+    </div>
+  </div>
+</div>
+<button type="button" class="support-fab" id="supportFab" onclick="openSupportModal()" title="Поддержка — напишите нам" aria-label="Поддержка"><span class="phone" aria-hidden="true">☎</span><span class="label">Поддержка</span></button>
+<div class="feedback-toast hidden" id="feedbackToast" role="status" aria-label="Напоминание об оценке" style="display:none!important" aria-hidden="true">
+  <!-- legacy toast kept hidden; blocking gate modal is used instead -->
+</div>
+<main class="layout">
+  <section class="card photo-only" id="sourceCard">
+    <div class="card-head">
+      <h2>1. Загрузить фото</h2>
+      <span class="tip" id="tipSource">
+        <button type="button" class="tip-btn" onclick="toggleTip('tipSource')" aria-label="Подсказка">?</button>
+        <span class="tip-bubble right">Дневной фронтальный снимок фасада. Ctrl+V, перетащить или «Выбрать файл».</span>
+      </span>
+    </div>
+    <div class="guide-strip" id="guideStrip">
+      <div class="guide-step"><b>1</b><br>Загрузить</div>
+      <div class="guide-step"><b>2</b><br>Сгенерировать</div>
+      <div class="guide-step"><b>3</b><br>Поправить в чате</div>
+    </div>
+    <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Вставить или загрузить фото фасада">
+      <div class="hint">
+        <strong>Вставьте фото фасада</strong><br>
+        Ctrl+V · перетащить · или дважды клик<br>
+        <span style="opacity:.85">Лучше дневной фронтальный снимок</span>
+      </div>
+      <img class="preview" id="sourceImg" alt="source">
+    </div>
+    <input type="file" id="sourceFile" class="hidden" accept="image/*">
+    <div class="drop-actions">
+      <button type="button" class="btn secondary" id="pickFileBtn" title="Открыть выбор файла с диска">Выбрать файл</button>
+      <button type="button" class="btn accent" id="startBtn" onclick="startStudio()" disabled title="Сначала загрузите фото">Сгенерировать</button>
+    </div>
+    <div class="model-row photo-only">
+      <label for="photoModelSelect">Модель</label>
+      <select id="photoModelSelect" aria-label="Модель генерации фото"></select>
+    </div>
+    <div class="status" id="statusBox">Скопируйте фото и нажмите Ctrl+V — или выберите файл</div>
+    <div class="warn-note" id="photoSoftWarn">Уберите чужие надписи/водяные знаки с фото — так результат чище.</div>
+  </section>
+
+  <section class="card video-only" id="videoSourceCard">
+    <div class="card-head"><h2>1. Фото фасада</h2></div>
+    <p class="muted" style="margin:0;font-size:13px;line-height:1.45">Загрузите дневное фото — дальше одна кнопка сделает ночную концепцию и видео по ней.</p>
+    <div class="dropzone" id="videoDropzone" tabindex="0" role="button" aria-label="Вставить или загрузить фото">
+      <div class="hint" id="videoDropHint">
+        <strong>Вставьте фото фасада</strong><br>
+        Ctrl+V · перетащить · или «Выбрать файл»
+      </div>
+      <img class="preview" id="videoSourceImg" alt="media preview" style="display:none">
+      <video id="videoSourcePreview" muted playsinline style="display:none;width:100%;max-height:220px;border-radius:10px;background:#000"></video>
+    </div>
+    <input type="file" id="videoMediaInput" class="hidden" accept="image/*,video/mp4,video/quicktime,video/webm,video/*">
+    <div class="drop-actions">
+      <button type="button" class="btn secondary" id="videoPickMediaBtn" title="Выбрать фото или видео">Выбрать файл</button>
+    </div>
+    <div class="clip-name muted" id="videoClipName" style="font-size:12px"></div>
+
+    <div class="card-head" style="margin-top:6px"><h2>2. Модель и запуск</h2></div>
+    <p class="muted" style="margin:0;font-size:12px;line-height:1.45">
+      Модель и длительность запоминаются. Seedance собирает ролик на выбранную длину (5–15 сек).
+    </p>
+    <div class="model-row">
+      <label for="videoModelSelect">Модель видео</label>
+      <select id="videoModelSelect" aria-label="Модель генерации видео"></select>
+    </div>
+    <div class="duration-row">
+      <div class="duration-top">
+        <label for="videoDurationRange">Длительность</label>
+        <span class="duration-val" id="videoDurationLabel">8 сек</span>
+      </div>
+      <input type="range" id="videoDurationRange" min="5" max="15" step="1" value="8" aria-label="Длительность ролика в секундах">
+      <div class="duration-ends"><span>5 сек</span><span>15 сек</span></div>
+    </div>
+    <div class="row" style="margin-top:8px;flex-wrap:wrap;gap:8px">
+      <button type="button" class="btn accent" id="videoRunBtn" onclick="runVideoOneClick()" disabled>Сделать видео</button>
+    </div>
+    <div class="status" id="videoStatusBox">Добавьте фото → нажмите «Сделать видео»</div>
+  </section>
+
+  <section class="card work-col" id="resultCard">
+    <div class="col-kicker work photo-only">Результат · правки</div>
+    <div class="col-kicker work video-only">Результат · видео</div>
+    <div class="card-head photo-only">
+      <h2>2. Результат</h2>
+      <span class="tip" id="tipResult">
+        <button type="button" class="tip-btn" onclick="toggleTip('tipResult')" aria-label="Подсказка">?</button>
+        <span class="tip-bubble right">Ночной рендер. Правки — текстом в чате или кистью по зоне.</span>
+      </span>
+    </div>
+    <div class="card-head video-only">
+      <h2>Превью ролика</h2>
+    </div>
+    <div class="video-progress video-only" id="videoProgressBox" aria-live="polite"></div>
+    <div class="result-stage photo-only" id="resultStage">
+      <img id="finalImg" alt="final">
+      <canvas id="editMarkupCanvas" class="hidden" tabindex="0" aria-hidden="true"></canvas>
+    </div>
+    <div class="video-stage video-only" id="videoStage">
+      <img class="video-still-preview" id="videoStillPreview" alt="Ночная концепция — ждём видео">
+      <video id="resultVideo" controls playsinline style="display:none;width:100%"></video>
+      <div class="muted" id="videoEmptyHint" style="padding:24px;text-align:center">Здесь появится готовое видео</div>
+      <div class="row" id="videoDownloadRow" style="display:none;margin-top:8px">
+        <a class="btn secondary" id="videoDownloadLink" href="#" download>Скачать видео</a>
+      </div>
+    </div>
+    <div class="markup-bar photo-only" id="markupBarTour">
+      <button type="button" class="btn secondary brush" id="editBrushBtn" onclick="toggleEditTool('brush')" title="Красная кисть: изменить или проставить свет">Кисть · правка</button>
+      <button type="button" class="btn secondary eraser" id="editEraserBtn" onclick="toggleEditTool('eraser')" title="Голубой ластик: убрать светильник">Ластик · убрать</button>
+      <label class="brush-size">Толщина <input type="range" id="editBrushSize" min="4" max="48" value="16" oninput="updateEditBrushSize(this.value)"></label>
+      <button type="button" class="btn secondary" onclick="clearEditMarkup()" title="Стереть разметку и выключить инструменты">Очистить разметку</button>
+    </div>
+    <div class="principle-note photo-only" id="workPrinciple">
+      <b>Правки:</b> напишите в чате справа, что изменить.
+      <b class="red">Кисть</b> / <b class="cyan">ластик</b> — если нужно указать место на фасаде.
+    </div>
+    <div class="legend photo-only">
+      Кисть/ластик → зона → что сделать → «Отправить». Или только текст в чате.
+    </div>
+    <div class="status photo-only" id="markupHint" style="display:none;margin-top:4px">Что хотите изменить на отмеченных светильниках? Напишите в чат ниже.</div>
+    <div class="markup-next-step photo-only" id="markupNextStep" role="status">
+      <b>Зона отмечена.</b> Дальше — чат справа: шаблон или свой текст → «Отправить».
+      <div class="step-actions">
+        <button type="button" class="btn accent" onclick="revealChatStepPanel(true)">Открыть чат</button>
+      </div>
+    </div>
+    <div class="row photo-only">
+      <button class="btn secondary" onclick="downloadFinal()" id="downloadBtn" disabled title="Скачать текущий результат">Скачать</button>
+      <button class="btn secondary" onclick="copyFinal()" id="copyFinalBtn" disabled title="Скопировать результат в буфер">Копировать</button>
+      <button class="btn accent" onclick="runVideoOneClick()" id="makeVideoFromPhotoBtn" disabled title="Ночная концепция → видео одной кнопкой">Сделать видео</button>
+    </div>
+    <div class="card-head" style="margin-top:4px">
+      <div class="muted">История версий · оценки</div>
+    </div>
+    <p class="hist-hint" id="activeHistoryHint"></p>
+    <div class="hist" id="historyStrip"></div>
+  </section>
+
+  <section class="card chat-col" id="chatCard">
+    <div class="col-kicker chat-label">Чат · команды и готовые кнопки</div>
+    <div class="card-head">
+      <h2>3. Чат с агентом</h2>
+      <span class="tip" id="tipChat">
+        <button type="button" class="tip-btn" onclick="toggleTip('tipChat')" aria-label="Подсказка">?</button>
+        <span class="tip-bubble right">Текст всегда работает сам. Кисть/ластик только уточняют где менять. Готовые кнопки можно нажимать по очереди — текст добавится в поле.</span>
+      </span>
+    </div>
+    <div class="chat-step-panel" id="chatStepPanel" role="status">
+      <div class="step-kicker" id="chatStepKicker">Шаг 2 из 2</div>
+      <h3 id="chatStepTitle">Зона отмечена — что сделать?</h3>
+      <ol id="chatStepList">
+        <li><b>Нажмите шаблон</b> ниже — текст сам попадёт в поле</li>
+        <li>или <b>напишите сами</b> в поле внизу</li>
+        <li>затем нажмите <b>«Отправить»</b></li>
+      </ol>
+      <div class="step-actions">
+        <button type="button" class="btn accent" onclick="scrollToQuickTemplates()">К шаблонам</button>
+        <button type="button" class="btn secondary" onclick="focusChatInstruction()">Написать свой текст</button>
+      </div>
+    </div>
+    <div class="principle-note" id="chatIdleNote">Без разметки достаточно написать задачу своими словами и нажать «Отправить». Кисть/ластик слева — если нужно указать точное место.</div>
+    <div class="quick" id="quickPrompts">
+      <div class="quick-group for-eraser" id="quickEraserGroup">
+        <div class="group-label">Шаблоны ластика (голубая зона) — нажмите одну кнопку:</div>
+        <button type="button" class="btn secondary lit-eraser" data-tool="eraser" onclick="fillChatPrompt('убери ТОЛЬКО отмеченные голубым светильники и лучи, все остальные светильники оставь как есть')" title="Убрать отмеченные светильники">Убери отмеченное</button>
+        <button type="button" class="btn secondary lit-eraser" data-tool="eraser" onclick="fillChatPrompt('убери отмеченные голубым прожекторы и их лучи, стену оставь как у соседних панелей без затемнения')" title="Убрать прожекторы в зоне">Убери прожекторы</button>
+        <button type="button" class="btn secondary lit-eraser" data-tool="eraser" onclick="fillChatPrompt('ослабь или почти погаси только отмеченные голубым лучи, сами соседние светильники не трогай')" title="Ослабить свет в зоне">Ослабь лучи</button>
+      </div>
+      <div class="quick-group for-brush" id="quickBrushGroup">
+        <div class="group-label">Шаблоны кисти (красная зона) — нажмите одну кнопку:</div>
+        <button type="button" class="btn secondary lit-brush" data-tool="brush" onclick="fillChatPrompt('измени ТОЛЬКО отмеченные красным светильники, остальные не трогай')" title="Изменить отмеченное">Измени отмеченное</button>
+        <button type="button" class="btn secondary lit-brush" data-tool="brush" onclick="fillChatPrompt('проставь прожектор только в красной отмеченной зоне, остальные светильники не трогай')" title="Проставить прожектор">Проставь прожектор</button>
+        <button type="button" class="btn secondary lit-brush" data-tool="brush" onclick="fillChatPrompt('сделай отмеченные красным лучи теплее и мягче, остальные светильники не трогай')" title="Теплее в зоне">Теплее в зоне</button>
+        <button type="button" class="btn secondary lit-brush" data-tool="brush" onclick="fillChatPrompt('усилить яркость только отмеченных красным светильников и лучей, остальное не трогай')" title="Ярче в зоне">Ярче в зоне</button>
+      </div>
+      <div class="group-label" id="quickAnyLabel" style="width:100%;font-size:11px;color:var(--muted)">Общие команды (без разметки тоже можно):</div>
+      <button type="button" class="btn secondary" data-tool="any" onclick="fillChatPrompt('теплее')" title="Подставить текст «теплее»">Теплее</button>
+      <button type="button" class="btn secondary" data-tool="any" onclick="fillChatPrompt('усиль карниз')" title="Подставить текст про карниз">Усиль карниз</button>
+    </div>
+    <div class="chat-input" id="chatSendTour">
+      <div class="input-step-label" id="chatInputStepLabel">Сюда напишите, что сделать с отмеченным — или сначала нажмите шаблон выше</div>
+      <textarea id="chatInput" placeholder="Можно просто написать: убери левый / сделай теплее / проставь прожектор у входа…"></textarea>
+      <button class="btn accent" id="chatBtn" onclick="sendChat()" disabled title="Отправить правку агенту">Отправить</button>
+    </div>
+    <div class="chat" id="chatBox"></div>
+    <!-- side feedback form kept hidden; rating = popup gate only -->
+    <section class="feedback-zone" id="feedbackZone" hidden aria-hidden="true">
+      <h2 style="margin:0;font-size:15px" id="feedbackTitle">Оценка этой генерации</h2>
+      <p class="muted" id="feedbackLead" style="margin:0"></p>
+      <div class="feedback-votes" id="feedbackVotes">
+        <button type="button" class="btn secondary like" id="feedbackLikeBtn" onclick="setFeedbackVote('like')">Нравится</button>
+        <button type="button" class="btn secondary dislike" id="feedbackDislikeBtn" onclick="setFeedbackVote('dislike')">Не нравится</button>
+      </div>
+      <select id="feedbackIssue" aria-label="Что улучшить">
+        <option value="">Что улучшить (необязательно)</option>
+        <option value="placement_incorrect">Расстановка света</option>
+        <option value="coverage_incomplete">Не хватает покрытия</option>
+        <option value="overlit">Слишком ярко</option>
+        <option value="underlit">Мало света</option>
+        <option value="style_mismatch">Не тот стиль</option>
+        <option value="other">Другое</option>
+      </select>
+      <textarea id="feedbackComment" placeholder="Комментарий (необязательно)" style="min-height:64px"></textarea>
+      <input id="feedbackContact" type="text" placeholder="Email или телефон (необязательно)">
+      <button type="button" class="btn accent" onclick="submitFeedback()" id="feedbackSubmitBtn">Отправить отзыв</button>
+      <div class="muted" id="feedbackStatus"></div>
+    </section>
+  </section>
+</main>
+<script>
+let projectId = '';
+let busy = false;
+let videoPipelineActive = false;
+let studioMode = 'photo';
+let videoScenario = 'from_photo';
+let lastState = {};
+function syncThemeToggleLabel(){
+  const btn = document.getElementById('themeToggleBtn');
+  if(!btn) return;
+  const theme = document.documentElement.getAttribute('data-theme') || 'dark';
+  btn.textContent = theme === 'light' ? 'Тёмная' : 'Светлая';
+}
+function toggleNiteosTheme(){
+  const cur = document.documentElement.getAttribute('data-theme') || 'dark';
+  const next = cur === 'light' ? 'dark' : 'light';
+  document.documentElement.setAttribute('data-theme', next);
+  try{ localStorage.setItem('niteos_theme', next); }catch(_){}
+  syncThemeToggleLabel();
+}
+syncThemeToggleLabel();
+let studioMaxUser = null;
+async function refreshStudioMaxUser(){
+  try{
+    const me = await api('/api/auth/me');
+    if(me && me.ok && me.user){
+      studioMaxUser = me.user;
+      const line = document.getElementById('supportUserLine');
+      if(line){
+        const name = [me.user.first_name, me.user.last_name].filter(Boolean).join(' ') || ('ID ' + (me.user.max_user_id || ''));
+        line.textContent = 'Вы: ' + name + ' · напишите нам, и оставьте телефон ниже — мы сможем ответить.';
+      }
+    }
+  }catch(_){}
+}
+function openSupportModal(){
+  const modal = document.getElementById('supportModal');
+  if(!modal) return;
+  refreshStudioMaxUser();
+  const status = document.getElementById('supportStatus');
+  if(status) status.textContent = '';
+  modal.classList.add('open');
+  try{ document.getElementById('supportMessage')?.focus({preventScroll:true}); }catch(_){}
+}
+function closeSupportModal(){
+  document.getElementById('supportModal')?.classList.remove('open');
+}
+async function submitSupportMessage(){
+  const status = document.getElementById('supportStatus');
+  const btn = document.getElementById('supportSendBtn');
+  const msg = (document.getElementById('supportMessage')?.value || '').trim();
+  if(!msg){
+    if(status) status.textContent = 'Напишите текст сообщения.';
+    return;
+  }
+  try{
+    if(btn) btn.disabled = true;
+    if(status) status.textContent = 'Отправляем…';
+    const fd = new FormData();
+    fd.append('kind', document.getElementById('supportKind')?.value || 'other');
+    fd.append('message', msg);
+    fd.append('contact', document.getElementById('supportContact')?.value || '');
+    if(projectId) fd.append('project_id', projectId);
+    const data = await api('/api/support/message', {method:'POST', body: fd});
+    if(status) status.textContent = data.message || 'Отправлено. Мы ответим.';
+    const ta = document.getElementById('supportMessage');
+    if(ta) ta.value = '';
+    setTimeout(() => closeSupportModal(), 900);
+  }catch(err){
+    if(status) status.textContent = String(err.message || err);
+  }finally{
+    if(btn) btn.disabled = false;
+  }
+}
+document.getElementById('supportModal')?.addEventListener('click', (e) => {
+  if(e.target && e.target.id === 'supportModal') closeSupportModal();
+});
+refreshStudioMaxUser();
+let editDrawing = false;
+let editLastPoint = null;
+let editTool = null; // 'brush' | 'eraser' | null (off)
+let editBrushSize = 16;
+let editMarkupReady = false;
+let markupBound = false;
+let feedbackVote = '';
+let feedbackTimer = null;
+let feedbackPromptedHistoryId = '';
+let feedbackToastDismissedFor = '';
+let pendingAfterFeedback = null; // {type:'generate'|'chat'|'createProject'}
+let studioImageModel = '';
+const FEEDBACK_TOAST_DELAY_MS = 8000;
+let markupUsedBrush = false;
+let markupUsedEraser = false;
+let tourStep = 0;
+let tourActive = false;
+let tourResizeBound = false;
+let tourTimers = [];
+let tourSnapshot = null;
+let tourActionKey = '';
+let tourLayoutTimer = null;
+const TOUR_BEFORE = '/assets/studio_tour/before.png';
+const TOUR_AFTER = '/assets/studio_tour/after.png';
+const STUDIO_TOUR = [
+  {
+    title: 'Что получите',
+    target: 'resultStage',
+    place: 'below',
+    action: 'beforeAfter',
+    html: '<div class="tour-action-chip">▶ Смотрите превращение</div><div class="tour-morph"><img src="'+TOUR_BEFORE+'" alt="до"><img class="after" src="'+TOUR_AFTER+'" alt="после"><div class="labels"><span>До</span><span>После</span></div></div><p>Дневное фото → ночная концепция подсветки NITEOS. Дальше — сами действия на экране.</p>'
+  },
+  {
+    title: 'Действие: загрузка фото',
+    target: 'dropzone',
+    place: 'below',
+    action: 'upload',
+    html: '<div class="tour-action-chip">▶ Вставляем фото в зону</div><p>Курсор показывает, как фото попадает в окно слева.</p><ol><li><b>Ctrl+V</b> / перетащить / дважды клик</li><li>Лучше дневной фронтальный снимок</li></ol>'
+  },
+  {
+    title: 'Действие: генерация',
+    target: 'startBtn',
+    place: 'below',
+    action: 'generate',
+    html: '<div class="tour-action-chip">▶ Жмём «Анализ → генерация»</div><p>Кнопка мигает, затем короткое демо окна ожидания — так выглядит реальный запуск.</p>'
+  },
+  {
+    title: 'Действие: результат',
+    target: 'resultCard',
+    place: 'below',
+    action: 'result',
+    html: '<div class="tour-action-chip">▶ Результат</div><p>Ночной рендер здесь. Правки — чат или кисть. Видео — отдельная вкладка сверху.</p>'
+  },
+  {
+    title: 'Действие: кисть и ластик',
+    target: 'resultCard',
+    place: 'below',
+    action: 'markup',
+    html: '<div class="tour-action-chip">▶ Рисуем зоны на фото</div><p>Смотрите на результат: сначала красная кисть, затем голубой ластик — как при живой правке.</p><ol><li><b style="color:#ff6b6b">Кисть</b> — изменить / добавить свет</li><li><b style="color:#4fd1c5">Ластик</b> — убрать / ослабить</li></ol>'
+  },
+  {
+    title: 'Действие: чат и кнопки',
+    target: 'chatCard',
+    place: 'above',
+    action: 'chat',
+    html: '<div class="tour-action-chip">▶ Пишем задачу в чат</div><p>Текст набирается сам, готовые кнопки подставляют команды. Можно править <b>только текстом</b> — кисть нужна для точности «где».</p>'
+  },
+  {
+    title: 'Действие: поддержка',
+    target: 'supportIconBtn',
+    place: 'below',
+    action: 'max',
+    html: '<div class="tour-action-chip">▶ Поддержка</div><p>Кнопка <b>☎ Поддержка</b> сверху или снизу справа — напишите нам. Оставьте телефон в форме, чтобы мы могли ответить.</p>'
+  },
+  {
+    title: 'Готово',
+    target: 'helpBtnPromo',
+    place: 'below',
+    action: 'done',
+    html: '<div class="tour-action-chip">✓ Можно начинать</div><p>Тур всегда открывается кнопкой <b>«Как это работает?»</b>. Создайте проект и загрузите своё фото.</p>'
+  }
+];
+
+function tourDelay(fn, ms){
+  const id = setTimeout(fn, ms);
+  tourTimers.push(id);
+  return id;
+}
+function clearTourTimers(){
+  tourTimers.forEach(clearTimeout);
+  tourTimers = [];
+}
+function ensureTourCursor(){
+  let el = document.getElementById('tourGhostCursor');
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'tourGhostCursor';
+    el.className = 'tour-ghost-cursor';
+    document.body.appendChild(el);
+  }
+  return el;
+}
+function moveTourCursorTo(el, on){
+  const cur = ensureTourCursor();
+  if(!el){ cur.classList.remove('on'); return; }
+  const r = el.getBoundingClientRect();
+  cur.style.left = (r.left + r.width * 0.55) + 'px';
+  cur.style.top = (r.top + r.height * 0.55) + 'px';
+  cur.classList.toggle('on', !!on);
+}
+function snapshotTourUi(){
+  const sourceImg = document.getElementById('sourceImg');
+  const finalImg = document.getElementById('finalImg');
+  const dropzone = document.getElementById('dropzone');
+  const chatInput = document.getElementById('chatInput');
+  const canvas = document.getElementById('editMarkupCanvas');
+  let markupData = '';
+  try{
+    if(canvas && canvas.width && canvas.height) markupData = canvas.toDataURL('image/png');
+  }catch(_){}
+  return {
+    sourceSrc: sourceImg ? sourceImg.getAttribute('src') : '',
+    finalSrc: finalImg ? finalImg.getAttribute('src') : '',
+    dropHas: dropzone ? dropzone.classList.contains('has-image') : false,
+    chatVal: chatInput ? chatInput.value : '',
+    editTool,
+    markupUsedBrush,
+    markupUsedEraser,
+    markupData,
+  };
+}
+function restoreTourUi(){
+  if(!tourSnapshot) return;
+  const sourceImg = document.getElementById('sourceImg');
+  const finalImg = document.getElementById('finalImg');
+  const dropzone = document.getElementById('dropzone');
+  const chatInput = document.getElementById('chatInput');
+  if(sourceImg){
+    if(tourSnapshot.sourceSrc) sourceImg.src = tourSnapshot.sourceSrc;
+    else { sourceImg.removeAttribute('src'); sourceImg.src = ''; }
+  }
+  if(dropzone) dropzone.classList.toggle('has-image', !!tourSnapshot.dropHas && !!tourSnapshot.sourceSrc);
+  if(finalImg){
+    if(tourSnapshot.finalSrc) finalImg.src = tourSnapshot.finalSrc;
+    else if(!(lastState && lastState.has_final)){
+      finalImg.removeAttribute('src'); finalImg.src = '';
+    }
+  }
+  if(chatInput) chatInput.value = tourSnapshot.chatVal || '';
+  const canvas = document.getElementById('editMarkupCanvas');
+  if(canvas){
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if(tourSnapshot.markupData){
+      const img = new Image();
+      img.onload = () => {
+        try{ ctx.drawImage(img, 0, 0, canvas.width, canvas.height); }catch(_){}
+      };
+      img.src = tourSnapshot.markupData;
+    }
+  }
+  editTool = tourSnapshot.editTool || null;
+  markupUsedBrush = !!tourSnapshot.markupUsedBrush;
+  markupUsedEraser = !!tourSnapshot.markupUsedEraser;
+  updateEditToolUi();
+  document.getElementById('busyOverlay')?.classList.remove('open', 'tour-demo');
+  document.querySelectorAll('.tour-demo-flash,.tour-click-flash,.tour-playing').forEach(el => {
+    el.classList.remove('tour-demo-flash', 'tour-click-flash', 'tour-playing');
+  });
+  const stage = document.getElementById('resultStage');
+  if(stage && !(editTool && lastState.has_final)) stage.classList.remove('is-editing');
+  setMarkupEnabled(!!lastState.has_final && !busy);
+  moveTourCursorTo(null, false);
+}
+function clearTourAction(){
+  clearTourTimers();
+  closeTourBusyDemo();
+  document.getElementById('busyOverlay')?.classList.remove('open', 'tour-demo');
+  document.querySelectorAll('.tour-demo-flash,.tour-click-flash,.tour-playing').forEach(el => {
+    el.classList.remove('tour-demo-flash', 'tour-click-flash', 'tour-playing');
+  });
+  // Reset demo tool state between tour steps; full restore happens on close.
+  if(tourActive && tourSnapshot){
+    editTool = tourSnapshot.editTool || null;
+    markupUsedBrush = !!tourSnapshot.markupUsedBrush;
+    markupUsedEraser = !!tourSnapshot.markupUsedEraser;
+    updateEditToolUi();
+  }
+  const brushGroup = document.getElementById('quickBrushGroup');
+  const eraserGroup = document.getElementById('quickEraserGroup');
+  if(!editTool && !markupUsedBrush && !markupUsedEraser){
+    if(brushGroup) brushGroup.classList.remove('open');
+    if(eraserGroup) eraserGroup.classList.remove('open');
+  }
+  moveTourCursorTo(null, false);
+}
+function drawTourStroke(ctx, points, color, width){
+  if(!ctx || !points.length) return;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.lineWidth = width || 14;
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.beginPath();
+  ctx.moveTo(points[0].x, points[0].y);
+  for(let i=1;i<points.length;i++) ctx.lineTo(points[i].x, points[i].y);
+  ctx.stroke();
+}
+function animateTourStroke(ctx, points, color, width, done){
+  if(!ctx || !points.length){ if(done) done(); return; }
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.lineWidth = width || 14;
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.beginPath();
+  ctx.arc(points[0].x, points[0].y, (width || 14) / 2, 0, Math.PI * 2);
+  ctx.fill();
+  let i = 1;
+  const step = () => {
+    if(!tourActive) return;
+    if(i >= points.length){ if(done) done(); return; }
+    ctx.beginPath();
+    ctx.moveTo(points[i - 1].x, points[i - 1].y);
+    ctx.lineTo(points[i].x, points[i].y);
+    ctx.stroke();
+    i += 1;
+    if(i < points.length) tourDelay(step, 45);
+    else if(done) done();
+  };
+  if(points.length > 1) tourDelay(step, 45);
+  else if(done) done();
+}
+function ensureTourFinalImage(done){
+  const finalImg = document.getElementById('finalImg');
+  if(!finalImg){ if(done) done(); return; }
+  const src = finalImg.getAttribute('src') || '';
+  if(src.includes('/assets/studio_tour/after.png') && finalImg.complete && finalImg.naturalWidth > 0){
+    if(done) done();
+    return;
+  }
+  let started = false;
+  const finish = () => {
+    if(started) return;
+    started = true;
+    if(done) done();
+  };
+  // Same broken src may not re-fire load/error — force a one-shot retry URL.
+  const needsRetry = src.includes('/assets/studio_tour/after.png') && !(finalImg.naturalWidth > 0);
+  finalImg.addEventListener('load', finish, {once:true});
+  finalImg.addEventListener('error', finish, {once:true});
+  finalImg.src = needsRetry ? (TOUR_AFTER + '?retry=' + Date.now()) : TOUR_AFTER;
+  if(finalImg.complete && finalImg.naturalWidth > 0) tourDelay(finish, 20);
+  tourDelay(finish, 1200); // never hang tour demos
+}
+function preloadTourAssets(){
+  [TOUR_BEFORE, TOUR_AFTER].forEach(src => {
+    const img = new Image();
+    img.src = src;
+  });
+}
+function openTourBusyDemo(){
+  const overlay = document.getElementById('busyOverlay');
+  const busyText = document.getElementById('busyText');
+  const busyTitle = document.getElementById('busyTitle');
+  if(busyTitle) busyTitle.textContent = 'Идёт генерация';
+  if(busyText) busyText.textContent = 'Демо: агент собирает ночную концепцию…';
+  overlay?.classList.add('open', 'tour-demo');
+}
+function closeTourBusyDemo(){
+  const overlay = document.getElementById('busyOverlay');
+  overlay?.classList.remove('open', 'tour-demo');
+}
+function buildStrokePath(w, h, kind){
+  if(kind === 'brush'){
+    const y = h * 0.30;
+    return [
+      {x:w*0.16,y:y},{x:w*0.22,y:y-2},{x:w*0.28,y:y},{x:w*0.34,y:y+2},
+      {x:w*0.40,y:y},{x:w*0.46,y:y-1},{x:w*0.52,y:y}
+    ];
+  }
+  const y = h * 0.55;
+  return [
+    {x:w*0.55,y:y},{x:w*0.62,y:y-1},{x:w*0.69,y:y},{x:w*0.76,y:y+1},{x:w*0.84,y:y}
+  ];
+}
+function playMarkupDemo(attempt){
+  if(!tourActive) return;
+  const stage = document.getElementById('resultStage');
+  const brushBtn = document.getElementById('editBrushBtn');
+  const eraserBtn = document.getElementById('editEraserBtn');
+  setMarkupEnabled(true);
+  syncEditMarkupCanvas();
+  const canvas = document.getElementById('editMarkupCanvas');
+  if(!canvas) return;
+  const w = Math.max(1, canvas.width);
+  const h = Math.max(1, canvas.height);
+  if(w < 8 || h < 8){
+    if((attempt || 0) < 8){
+      tourDelay(() => playMarkupDemo((attempt || 0) + 1), 120);
+    }
+    return;
+  }
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  editTool = 'brush';
+  updateEditToolUi();
+  const brushPath = buildStrokePath(w, h, 'brush');
+  animateTourStroke(ctx, brushPath, 'rgba(255,70,70,0.92)', Math.max(10, w * 0.02), () => {
+    if(!tourActive) return;
+    markupUsedBrush = true;
+    moveTourCursorTo(eraserBtn, true);
+    eraserBtn?.classList.add('tour-click-flash');
+    tourDelay(() => {
+      if(!tourActive) return;
+      editTool = 'eraser';
+      updateEditToolUi();
+      const eraserPath = buildStrokePath(w, h, 'eraser');
+      animateTourStroke(ctx, eraserPath, 'rgba(79,209,197,0.92)', Math.max(10, w * 0.018), () => {
+        if(!tourActive) return;
+        markupUsedEraser = true;
+        updateEditToolUi();
+        moveTourCursorTo(stage, true);
+      });
+    }, 350);
+  });
+}
+function runTourAction(action){
+  clearTourAction();
+  if(!action) return;
+  // Prevent accidental real clicks under the spotlight while demos play.
+  document.getElementById('startBtn')?.setAttribute('disabled', 'disabled');
+  document.getElementById('chatBtn')?.setAttribute('disabled', 'disabled');
+  const dropzone = document.getElementById('dropzone');
+  const sourceImg = document.getElementById('sourceImg');
+  const finalImg = document.getElementById('finalImg');
+  const stage = document.getElementById('resultStage');
+  const startBtn = document.getElementById('startBtn');
+  const brushBtn = document.getElementById('editBrushBtn');
+  const eraserBtn = document.getElementById('editEraserBtn');
+  const chatInput = document.getElementById('chatInput');
+  const chatBtn = document.getElementById('chatBtn');
+  const downloadBtn = document.getElementById('downloadBtn');
+  const copyBtn = document.getElementById('copyFinalBtn');
+  const maxCard = document.getElementById('supportIconBtn');
+
+  if(action === 'beforeAfter'){
+    ensureTourFinalImage(() => {
+      if(!tourActive) return;
+      if(stage) stage.classList.add('tour-playing');
+    });
+  }
+  if(action === 'upload'){
+    if(dropzone) dropzone.classList.add('tour-demo-flash');
+    moveTourCursorTo(dropzone, true);
+    tourDelay(() => {
+      if(!tourActive) return;
+      if(sourceImg){ sourceImg.src = TOUR_BEFORE; }
+      if(dropzone) dropzone.classList.add('has-image');
+      moveTourCursorTo(dropzone, true);
+    }, 500);
+  }
+  if(action === 'generate'){
+    if(sourceImg && !(sourceImg.getAttribute('src'))){
+      sourceImg.src = TOUR_BEFORE;
+      dropzone?.classList.add('has-image');
+    }
+    moveTourCursorTo(startBtn, true);
+    startBtn?.classList.add('tour-click-flash');
+    tourDelay(() => {
+      if(!tourActive) return;
+      openTourBusyDemo();
+    }, 450);
+    tourDelay(() => {
+      if(!tourActive) return;
+      closeTourBusyDemo();
+      ensureTourFinalImage(() => {
+        if(!tourActive) return;
+        stage?.classList.add('tour-playing');
+        moveTourCursorTo(stage, true);
+      });
+    }, 1400);
+  }
+  if(action === 'result'){
+    ensureTourFinalImage(() => {
+      if(!tourActive) return;
+      stage?.classList.add('tour-playing');
+      moveTourCursorTo(downloadBtn, true);
+      downloadBtn?.classList.add('tour-click-flash');
+      tourDelay(() => {
+        if(!tourActive) return;
+        moveTourCursorTo(copyBtn, true);
+        copyBtn?.classList.add('tour-click-flash');
+      }, 900);
+    });
+  }
+  if(action === 'markup'){
+    stage?.classList.add('tour-playing');
+    moveTourCursorTo(brushBtn, true);
+    brushBtn?.classList.add('tour-click-flash');
+    ensureTourFinalImage(() => {
+      if(!tourActive) return;
+      playMarkupDemo(0);
+    });
+  }
+  if(action === 'chat'){
+    const brushGroup = document.getElementById('quickBrushGroup');
+    const eraserGroup = document.getElementById('quickEraserGroup');
+    if(brushGroup) brushGroup.classList.add('open');
+    if(eraserGroup) eraserGroup.classList.add('open');
+    moveTourCursorTo(brushGroup || chatInput, true);
+    const demoText = 'проставь прожектор в красной зоне и убери отмеченное голубым';
+    if(chatInput){
+      chatInput.value = '';
+      let i = 0;
+      const typeNext = () => {
+        if(!tourActive || i > demoText.length) return;
+        chatInput.value = demoText.slice(0, i);
+        i += 1;
+        tourDelay(typeNext, 28);
+      };
+      tourDelay(typeNext, 400);
+    }
+    tourDelay(() => {
+      if(!tourActive) return;
+      moveTourCursorTo(chatBtn, true);
+      chatBtn?.classList.add('tour-click-flash');
+    }, 2200);
+  }
+  if(action === 'max'){
+    moveTourCursorTo(maxCard, true);
+    maxCard?.classList.add('tour-click-flash');
+  }
+  if(action === 'done'){
+    const help = document.getElementById('helpBtnPromo');
+    moveTourCursorTo(help, true);
+    help?.classList.add('tour-click-flash');
+  }
+}
+
+function qs(){ return new URLSearchParams(location.search); }
+function esc(s){ return String(s??'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+async function api(path, opts={}){
+  const res = await fetch(path, opts);
+  const data = await res.json().catch(()=>({}));
+  if(!res.ok){
+    let detail = data.detail || res.statusText || 'Ошибка';
+    if(Array.isArray(detail)) detail = detail.map(x => x.msg || String(x)).join(', ');
+    const err = new Error(detail);
+    err.status = res.status;
+    throw err;
+  }
+  return data;
+}
+function setVideoPipelineStep(step){
+  // step: 0 idle, 1 night concept, 2 video, 3 done
+  const steps = document.getElementById('busySteps');
+  const s1 = document.getElementById('busyStep1');
+  const s2 = document.getElementById('busyStep2');
+  const prog = document.getElementById('videoProgressBox');
+  const stage = document.getElementById('videoStage');
+  const still = document.getElementById('videoStillPreview');
+  if(steps){
+    steps.style.display = step > 0 && step < 3 ? 'flex' : 'none';
+    steps.setAttribute('aria-hidden', step > 0 && step < 3 ? 'false' : 'true');
+  }
+  if(s1){
+    s1.classList.toggle('on', step === 1);
+    s1.classList.toggle('done', step >= 2);
+  }
+  if(s2){
+    s2.classList.toggle('on', step === 2);
+    s2.classList.toggle('done', step >= 3);
+  }
+  if(prog){
+    if(step === 1){
+      prog.classList.add('open');
+      prog.innerHTML = '<b>Шаг 1 из 2</b> — ночной кадр с архитектурной подсветкой…';
+    } else if(step === 2){
+      prog.classList.add('open');
+      prog.innerHTML = '<b>Шаг 2 из 2</b> — собираем видео из ночного кадра. Ролик появится здесь.';
+    } else if(step === 3){
+      prog.classList.add('open');
+      prog.innerHTML = '<b>Готово</b> — видео ниже. Можно смотреть и скачать.';
+    } else {
+      prog.classList.remove('open');
+      prog.innerHTML = '';
+    }
+  }
+  if(stage){
+    const waiting = step === 1 || step === 2;
+    stage.classList.toggle('waiting-video', waiting && !(lastState && lastState.video_url));
+  }
+  if(still && lastState && lastState.final_url && (step === 1 || step === 2)){
+    still.src = lastState.final_url + (lastState.final_url.includes('?') ? '&' : '?') + 't=' + Date.now();
+  }
+}
+function showVideoResult(url){
+  const video = document.getElementById('resultVideo');
+  const empty = document.getElementById('videoEmptyHint');
+  const dlRow = document.getElementById('videoDownloadRow');
+  const dl = document.getElementById('videoDownloadLink');
+  const stage = document.getElementById('videoStage');
+  if(stage) stage.classList.remove('waiting-video');
+  if(!video || !url) return;
+  const src = url + (url.includes('?') ? '&' : '?') + 't=' + Date.now();
+  video.src = src;
+  video.style.display = 'block';
+  if(empty) empty.style.display = 'none';
+  if(dl && dlRow){
+    dl.href = src;
+    dl.download = 'niteos_video_' + (projectId || 'out').slice(0,8) + '.mp4';
+    dlRow.style.display = 'flex';
+  }
+  try{ video.load(); }catch(_){}
+  try{ video.play().catch(()=>{}); }catch(_){}
+  try{
+    requestAnimationFrame(() => {
+      document.getElementById('resultCard')?.scrollIntoView({behavior:'smooth', block:'center'});
+    });
+  }catch(_){}
+  setVideoPipelineStep(3);
+}
+function setBusy(on, msg){
+  busy = !!on;
+  const box = document.getElementById('statusBox');
+  box.classList.toggle('busy', busy);
+  box.classList.remove('err');
+  if(msg) box.textContent = msg;
+  document.getElementById('startBtn').disabled = busy || !projectId;
+  const regenBtn = document.getElementById('regenBtn');
+  if(regenBtn) regenBtn.disabled = busy || !projectId;
+  document.getElementById('chatBtn').disabled = busy || !projectId;
+  document.getElementById('downloadBtn').disabled = !lastState.has_final;
+  setMarkupEnabled(!!lastState.has_final && !busy);
+  const overlay = document.getElementById('busyOverlay');
+  const busyText = document.getElementById('busyText');
+  const busyTitle = document.getElementById('busyTitle');
+  if(overlay){
+    if(busy) overlay.classList.remove('tour-demo');
+    overlay.classList.toggle('open', busy);
+    overlay.setAttribute('aria-busy', busy ? 'true' : 'false');
+  }
+  if(busy && busyText && msg) busyText.textContent = msg;
+  if(busyTitle){
+    if(!busy){
+      busyTitle.textContent = 'Идёт генерация';
+    } else if(msg && /шаг 1|ночн|подсветк|концепц/i.test(msg)){
+      busyTitle.textContent = 'Шаг 1 из 2 · Ночь + свет';
+    } else if(msg && /шаг 2|видео|ролик/i.test(msg)){
+      busyTitle.textContent = 'Шаг 2 из 2 · Видео';
+    } else if(msg && /загружаю картинк|загружаю результат/i.test(msg)){
+      busyTitle.textContent = 'Почти готово';
+    } else if(msg && /правк|разметк|редактир/i.test(msg)){
+      busyTitle.textContent = 'Идёт правка';
+    } else {
+      busyTitle.textContent = 'Идёт генерация';
+    }
+  }
+  if(!videoPipelineActive) updateVideoPanel(lastState);
+}
+function loadFinalImageAndWait(img, url, timeoutMs){
+  return new Promise((resolve) => {
+    if(!img || !url){ resolve(false); return; }
+    let done = false;
+    const finish = (ok) => {
+      if(done) return;
+      done = true;
+      try{ img.removeEventListener('load', onLoad); }catch(_){}
+      try{ img.removeEventListener('error', onErr); }catch(_){}
+      if(timer) clearTimeout(timer);
+      resolve(!!ok);
+    };
+    const onLoad = () => finish(img.naturalWidth > 0);
+    const onErr = () => finish(false);
+    const timer = setTimeout(() => finish(img.complete && img.naturalWidth > 0), timeoutMs || 60000);
+    img.addEventListener('load', onLoad);
+    img.addEventListener('error', onErr);
+    img.src = url;
+    // Cached images may already be complete right after assigning src.
+    if(img.complete && img.naturalWidth > 0){
+      requestAnimationFrame(() => finish(true));
+    }
+  });
+}
+function setError(msg){
+  const box = document.getElementById('statusBox');
+  box.classList.add('err');
+  box.classList.remove('busy');
+  box.textContent = msg;
+  busy = false;
+  const overlay = document.getElementById('busyOverlay');
+  if(overlay){
+    overlay.classList.remove('open');
+    overlay.setAttribute('aria-busy', 'false');
+  }
+}
+function renderChat(chat){
+  const box = document.getElementById('chatBox');
+  const items = chat || [];
+  box.innerHTML = items.map(m => `<div class="bubble ${esc(m.role||'assistant')}">${esc(m.text||'')}</div>`).join('')
+    || '<div class="muted">История чата появится после первой генерации</div>';
+  box.scrollTop = box.scrollHeight;
+}
+async function applyStudioPayload(data){
+  lastState = data || {};
+  syncProjectLabel(data.project_name || '');
+  const st = data.state || {};
+  renderChat(data.chat || []);
+  // During one-click video: do NOT wait for photo paint — user needs the reel, not the still.
+  const holdBusyForFinal = !!busy && !!data.final_url && !videoPipelineActive;
+
+  const dropzone = document.getElementById('dropzone');
+  const sourceImg = document.getElementById('sourceImg');
+  if(data.source_url){
+    sourceImg.src = data.source_url + '?t=' + Date.now();
+    dropzone.classList.add('has-image');
+  } else {
+    sourceImg.removeAttribute('src');
+    sourceImg.src = '';
+    dropzone.classList.remove('has-image');
+  }
+
+  const finalImg = document.getElementById('finalImg');
+  let finalReadyPromise = null;
+  if(data.final_url){
+    const nextSrc = data.final_url + '?t=' + Date.now();
+    if(videoPipelineActive){
+      // Quietly keep final for stage-2 video; show still preview in video panel.
+      finalImg.src = nextSrc;
+      const still = document.getElementById('videoStillPreview');
+      if(still) still.src = nextSrc;
+    } else if(holdBusyForFinal){
+      setBusy(true, 'Почти готово — загружаю картинку результата…');
+      finalImg.onload = null;
+      finalImg.onerror = null;
+      finalReadyPromise = loadFinalImageAndWait(finalImg, nextSrc, 60000).then((ok) => {
+        syncEditMarkupCanvas();
+        return ok;
+      });
+    } else {
+      finalImg.onload = () => { syncEditMarkupCanvas(); setMarkupEnabled(true); };
+      finalImg.src = nextSrc;
+    }
+  } else {
+    finalImg.onload = null;
+    finalImg.removeAttribute('src');
+    finalImg.src = '';
+    clearEditMarkup();
+    setMarkupEnabled(false);
+  }
+
+  const hist = document.getElementById('historyStrip');
+  const activeId = data.active_history_id;
+  const histStamp = Date.now();
+  hist.innerHTML = (data.history || []).map(h => {
+    const kindRaw = String(h.kind || '').toLowerCase();
+    let kindRu = isVideo ? 'Видео' : 'Фото';
+    if(!isVideo && (kindRaw.includes('chat') || kindRaw.includes('edit'))) kindRu = 'Правка';
+    const label = kindRu + (h.id != null ? (' #' + h.id) : '');
+    const title = esc((h.note || h.prompt || h.feedback_comment || '').slice(0, 120));
+    const active = h.active || String(h.id) === String(activeId);
+    const vote = (h.feedback_vote || '').toLowerCase();
+    let voteCls = 'pending';
+    let voteText = '⏳ Нет оценки';
+    if(vote === 'like'){ voteCls = 'like'; voteText = '👍 Нравится'; }
+    else if(vote === 'dislike'){ voteCls = 'dislike'; voteText = '👎 Не нравится'; }
+    else if((h.feedback_status || '').toLowerCase() === 'skipped'){ voteText = 'Пропущено'; }
+    const comment = (h.feedback_comment || '').trim();
+    const shortComment = comment ? (comment.length > 42 ? comment.slice(0, 42) + '…' : comment) : '';
+    const annUrl = (h.annotation_url || '').trim();
+    const hasAnn = !!annUrl;
+    const url = String(h.url || '').trim();
+    const videoUrl = String(h.video_url || '').trim();
+    const isVideo = (h.media_kind || '') === 'video' || !!videoUrl;
+    if(!url && !videoUrl) return '';
+    const thumb = url || '';
+    return `<button type="button" class="hist-item${active ? ' active' : ''}" title="${title}" data-hist-id="${esc(String(h.id))}" data-hist-url="${esc(url)}" data-video-url="${esc(videoUrl)}" data-media-kind="${isVideo ? 'video' : 'image'}">
+      <div class="hist-thumb">
+        ${thumb ? `<img src="${esc(thumb)}?t=${histStamp}" alt="" loading="lazy" onerror="this.style.opacity='.35'">` : '<div class="muted" style="padding:18px">видео</div>'}
+        ${hasAnn ? `<img class="hist-ann" src="${esc(annUrl)}?t=${histStamp}" alt="разметка">` : ''}
+      </div>
+      <span>${label}${active ? ' · active' : ''}${isVideo ? ' · video' : ''}</span>
+      ${hasAnn ? '<span class="hist-markup-tag">разметка · кисть/ластик</span>' : ''}
+      <span class="hist-vote ${voteCls}">${esc(voteText)}</span>
+      ${shortComment ? `<span class="hist-comment">${esc(shortComment)}</span>` : ''}
+    </button>`;
+  }).join('') || '<div class="muted">История версий появится после генерации</div>';
+  hist.querySelectorAll('.hist-item[data-hist-id]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      restoreHistoryVersion(
+        btn.getAttribute('data-hist-id'),
+        btn.getAttribute('data-hist-url') || '',
+        {
+          videoUrl: btn.getAttribute('data-video-url') || '',
+          mediaKind: btn.getAttribute('data-media-kind') || 'image',
+        }
+      );
+    });
+  });
+  const hint = document.getElementById('activeHistoryHint');
+  if(hint){
+    hint.textContent = activeId != null
+      ? ('Активна версия #' + activeId + ' — кисть/ластик и «Отправить» правят её')
+      : ((data.history || []).length ? 'Выберите версию в истории, чтобы править именно её' : '');
+  }
+  document.getElementById('downloadBtn').disabled = !data.has_final;
+  const copyBtn = document.getElementById('copyFinalBtn');
+  if(copyBtn) copyBtn.disabled = !data.has_final;
+  const makeVidBtn = document.getElementById('makeVideoFromPhotoBtn');
+  if(makeVidBtn) makeVidBtn.disabled = !(data.has_final || data.has_source) || busy;
+  updateVideoPanel(data);
+  document.getElementById('chatBtn').disabled = !projectId || busy;
+  const regenBtnApply = document.getElementById('regenBtn');
+  if(regenBtnApply) regenBtnApply.disabled = !projectId || busy;
+  setMarkupEnabled(!!data.has_final && !busy);
+  updateEditToolUi();
+  if(!videoPipelineActive) scheduleFeedbackPrompt(data);
+  if(data.has_final){
+    if(finalReadyPromise){
+      try{ await finalReadyPromise; }catch(_){}
+    }
+    if(videoPipelineActive){
+      setVideoPipelineStep(2);
+      setBusy(true, 'Шаг 2 из 2: собираем видео из ночного кадра…');
+      setVideoStatus('Шаг 2 из 2: видео появится здесь…', false);
+      return;
+    }
+    const usedModel = data.routerai_model || (data.state && data.state.routerai_model) || '';
+    setBusy(false, usedModel
+      ? ('Готово · модель: ' + usedModel + '. Смотрите результат в центре.')
+      : 'Готово. Смотрите результат в центре — кисть/ластик для правок.');
+    try{
+      requestAnimationFrame(() => {
+        document.getElementById('resultCard')?.scrollIntoView({behavior:'smooth', block:'center'});
+      });
+    }catch(_){}
+  }
+}
+function clearTourTarget(){
+  document.querySelectorAll('.tour-target-live').forEach(el => el.classList.remove('tour-target-live', 'tour-pulse'));
+}
+function positionCoachCard(targetRect, place){
+  const card = document.getElementById('coachCard');
+  if(!card) return;
+  const pad = 12;
+  const cw = card.offsetWidth || 360;
+  const ch = card.offsetHeight || 200;
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  let top, left;
+  const prefer = place || 'below';
+  if(prefer === 'above'){
+    top = targetRect.top - ch - 14;
+    if(top < pad) top = targetRect.bottom + 14;
+  } else {
+    top = targetRect.bottom + 14;
+    if(top + ch > vh - pad) top = Math.max(pad, targetRect.top - ch - 14);
+  }
+  left = targetRect.left + (targetRect.width / 2) - (cw / 2);
+  left = Math.max(pad, Math.min(left, vw - cw - pad));
+  top = Math.max(pad, Math.min(top, vh - ch - pad));
+  card.style.top = Math.round(top) + 'px';
+  card.style.left = Math.round(left) + 'px';
+}
+function positionTourChrome(target, step){
+  const hole = document.getElementById('coachHole');
+  const shade = document.getElementById('coachShade');
+  if(!target){
+    if(shade) shade.style.display = 'block';
+    if(hole) hole.style.display = 'none';
+    const card = document.getElementById('coachCard');
+    if(card){
+      card.style.top = '20%';
+      card.style.left = '50%';
+      card.style.transform = 'translateX(-50%)';
+    }
+    return;
+  }
+  const rect = target.getBoundingClientRect();
+  const pad = 8;
+  if(shade) shade.style.display = 'none';
+  if(hole){
+    hole.style.display = 'block';
+    hole.style.top = Math.max(0, rect.top - pad) + 'px';
+    hole.style.left = Math.max(0, rect.left - pad) + 'px';
+    hole.style.width = Math.max(24, rect.width + pad * 2) + 'px';
+    hole.style.height = Math.max(24, rect.height + pad * 2) + 'px';
+  }
+  const card = document.getElementById('coachCard');
+  if(card) card.style.transform = '';
+  positionCoachCard({
+    top: rect.top - pad,
+    left: rect.left - pad,
+    width: rect.width + pad * 2,
+    height: rect.height + pad * 2,
+    bottom: rect.bottom + pad,
+    right: rect.right + pad
+  }, step.place);
+}
+function renderStudioTour(opts){
+  const onlyLayout = !!(opts && opts.onlyLayout);
+  const step = STUDIO_TOUR[tourStep] || STUDIO_TOUR[0];
+  if(!onlyLayout){
+    clearTourTarget();
+    document.getElementById('coachStepN').textContent = 'Шаг ' + (tourStep + 1) + ' из ' + STUDIO_TOUR.length;
+    document.getElementById('coachTitle').textContent = step.title;
+    document.getElementById('coachBody').innerHTML = step.html;
+    document.getElementById('coachPrevBtn').style.visibility = tourStep > 0 ? 'visible' : 'hidden';
+    document.getElementById('coachNextBtn').textContent = tourStep >= STUDIO_TOUR.length - 1 ? 'Понятно ✓' : 'Далее →';
+  }
+
+  const target = document.getElementById(step.target);
+  if(!target){
+    positionTourChrome(null, step);
+    return;
+  }
+  if(!onlyLayout){
+    target.classList.add('tour-target-live', 'tour-pulse');
+    try{ target.scrollIntoView({behavior:'smooth', block:'nearest', inline:'nearest'}); }catch(_){}
+  } else if(!target.classList.contains('tour-target-live')){
+    target.classList.add('tour-target-live', 'tour-pulse');
+  }
+  clearTimeout(tourLayoutTimer);
+  tourLayoutTimer = setTimeout(() => {
+    if(!tourActive) return;
+    positionTourChrome(target, step);
+    if(!onlyLayout){
+      const key = tourStep + ':' + (step.action || '');
+      if(tourActionKey !== key){
+        tourActionKey = key;
+        runTourAction(step.action);
+      }
+    }
+  }, onlyLayout ? 40 : 160);
+}
+function openStudioTour(){
+  tourStep = 0;
+  tourActive = true;
+  tourActionKey = '';
+  tourSnapshot = snapshotTourUi();
+  preloadTourAssets();
+  document.getElementById('coachRoot').classList.add('open');
+  document.getElementById('studioTour').classList.remove('open');
+  renderStudioTour();
+  if(!tourResizeBound){
+    tourResizeBound = true;
+    window.addEventListener('resize', () => {
+      if(!tourActive) return;
+      clearTimeout(tourLayoutTimer);
+      tourLayoutTimer = setTimeout(() => renderStudioTour({onlyLayout:true}), 60);
+    });
+    window.addEventListener('scroll', () => {
+      if(!tourActive) return;
+      clearTimeout(tourLayoutTimer);
+      tourLayoutTimer = setTimeout(() => renderStudioTour({onlyLayout:true}), 60);
+    }, true);
+  }
+}
+function closeStudioTour(){
+  tourActive = false;
+  tourActionKey = '';
+  clearTimeout(tourLayoutTimer);
+  clearTourAction();
+  restoreTourUi();
+  tourSnapshot = null;
+  document.getElementById('coachRoot').classList.remove('open');
+  document.getElementById('studioTour').classList.remove('open');
+  clearTourTarget();
+  // Re-enable controls according to real project state
+  document.getElementById('startBtn').disabled = busy || !projectId;
+  document.getElementById('chatBtn').disabled = busy || !projectId;
+  try{ localStorage.setItem('niteos_studio_tour_seen', '1'); }catch(_){}
+}
+function prevStudioTour(){
+  if(tourStep > 0){
+    clearTourAction();
+    tourActionKey = '';
+    tourStep--;
+    renderStudioTour();
+  }
+}
+function nextStudioTour(){
+  if(tourStep >= STUDIO_TOUR.length - 1){ closeStudioTour(); return; }
+  clearTourAction();
+  tourActionKey = '';
+  tourStep++;
+  renderStudioTour();
+}
+function copyContactPhone(ev){
+  if(ev){ try{ ev.preventDefault(); }catch(_){ } }
+  const el = document.getElementById('contactPhoneLink');
+  const phone = (el && (el.getAttribute('data-phone') || el.textContent) || '8 843 202 21 39').trim();
+  const hint = document.getElementById('phoneCopyHint');
+  const done = () => {
+    if(hint){
+      hint.style.display = 'inline';
+      setTimeout(() => { hint.style.display = 'none'; }, 1600);
+    }
+    const box = document.getElementById('statusBox');
+    if(box){
+      box.classList.remove('busy', 'err');
+      box.textContent = 'Номер скопирован: ' + phone;
+    }
+  };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(phone).then(done).catch(() => {
+      try{
+        const ta = document.createElement('textarea');
+        ta.value = phone; document.body.appendChild(ta); ta.select();
+        document.execCommand('copy'); ta.remove(); done();
+      }catch(_){}
+    });
+  } else {
+    try{
+      const ta = document.createElement('textarea');
+      ta.value = phone; document.body.appendChild(ta); ta.select();
+      document.execCommand('copy'); ta.remove(); done();
+    }catch(_){}
+  }
+  return false;
+}
+function setFeedbackVote(vote){
+  feedbackVote = (vote === 'like' || vote === 'dislike') ? vote : '';
+  document.getElementById('feedbackLikeBtn')?.classList.toggle('active', feedbackVote === 'like');
+  document.getElementById('feedbackDislikeBtn')?.classList.toggle('active', feedbackVote === 'dislike');
+}
+function openFeedbackGate(opts){
+  const gate = document.getElementById('feedbackGate');
+  if(!gate) return;
+  const pendingNote = document.getElementById('feedbackGatePending');
+  const statusEl = document.getElementById('feedbackGateStatus');
+  const lead = document.getElementById('feedbackGateLead');
+  const hasPending = !!(pendingAfterFeedback && pendingAfterFeedback.type);
+  if(pendingNote){
+    pendingNote.classList.toggle('hidden', !hasPending);
+    const labels = {generate:'генерацию', chat:'правку', createProject:'создание нового проекта'};
+    const what = labels[pendingAfterFeedback?.type] || 'действие';
+    pendingNote.textContent = hasPending
+      ? ('После оценки сразу продолжим: ' + what + '.')
+      : '';
+  }
+  if(lead){
+    lead.textContent = (opts && opts.message)
+      ? String(opts.message)
+      : 'Без оценки нельзя продолжить: ни генерацию, ни правку, ни новый проект.';
+  }
+  if(statusEl){
+    statusEl.classList.remove('err');
+    statusEl.textContent = '';
+  }
+  gate.classList.add('open');
+  try{ document.getElementById('feedbackGateLikeBtn')?.focus({preventScroll:true}); }catch(_){}
+}
+function closeFeedbackGate(){
+  const gate = document.getElementById('feedbackGate');
+  if(gate) gate.classList.remove('open');
+  const statusEl = document.getElementById('feedbackGateStatus');
+  if(statusEl){
+    statusEl.classList.remove('err');
+    statusEl.textContent = '';
+  }
+  setFeedbackGateBusy(false);
+}
+function cancelFeedbackGate(){
+  // Close modal only — pending action is dropped so user stays where they were.
+  pendingAfterFeedback = null;
+  closeFeedbackGate();
+  const box = document.getElementById('statusBox');
+  if(box){
+    box.classList.remove('busy');
+    box.classList.add('err');
+    box.textContent = 'Нужна оценка результата. Нажмите действие снова — снова откроется окно оценки.';
+  }
+}
+function setFeedbackGateBusy(on){
+  const like = document.getElementById('feedbackGateLikeBtn');
+  const dislike = document.getElementById('feedbackGateDislikeBtn');
+  const cancel = document.getElementById('feedbackGateCancelBtn');
+  if(like) like.disabled = !!on;
+  if(dislike) dislike.disabled = !!on;
+  if(cancel) cancel.disabled = !!on;
+}
+function openFeedbackZone(opts){
+  const zone = document.getElementById('feedbackZone');
+  if(!zone) return;
+  zone.classList.add('open');
+  const force = !!(opts && opts.forceFocus);
+  if(force){
+    // Required path always uses the blocking center modal — not a page scroll.
+    openFeedbackGate({message: opts && opts.message});
+    return;
+  }
+}
+function hideFeedbackToast(){
+  const toast = document.getElementById('feedbackToast');
+  if(toast) toast.classList.add('hidden');
+}
+function promptFeedbackRequired(message, pending){
+  if(pending) pendingAfterFeedback = pending;
+  setError(message || 'Сначала оцените предыдущий результат.');
+  openFeedbackGate({
+    message: 'Поставьте оценку предыдущему результату — без этого дальше нельзя.'
+  });
+  const statusEl = document.getElementById('feedbackStatus');
+  if(statusEl){
+    statusEl.textContent = pending
+      ? 'Поставьте оценку в окне — после этого продолжим автоматически.'
+      : 'Оцените результат в окне, затем повторите действие.';
+  }
+  const gateStatus = document.getElementById('feedbackGateStatus');
+  if(gateStatus){
+    gateStatus.classList.remove('err');
+    gateStatus.textContent = pending
+      ? 'Выберите «Нравится» или «Не нравится» — и сразу продолжим.'
+      : 'Выберите «Нравится» или «Не нравится».';
+  }
+}
+function showFeedbackToast(){
+  // Soft toast disabled — users need a blocking modal, not a corner hint.
+  hideFeedbackToast();
+}
+function dismissFeedbackToast(){
+  hideFeedbackToast();
+  if(feedbackPromptedHistoryId) feedbackToastDismissedFor = feedbackPromptedHistoryId;
+  clearTimeout(feedbackTimer);
+  feedbackTimer = null;
+}
+async function quickFeedbackFromToast(vote){
+  await submitFeedbackFromGate(vote);
+}
+async function submitFeedbackFromGate(vote){
+  setFeedbackVote(vote);
+  const gateStatus = document.getElementById('feedbackGateStatus');
+  if(gateStatus){
+    gateStatus.classList.remove('err');
+    gateStatus.textContent = 'Сохраняем оценку…';
+  }
+  setFeedbackGateBusy(true);
+  try{
+    await submitFeedback({fromGate:true});
+  }finally{
+    setFeedbackGateBusy(false);
+  }
+}
+function latestHistoryNeedsFeedback(state, opts){
+  if(!state) return false;
+  const hist = Array.isArray(state.history) ? state.history : [];
+  const last = hist.length ? hist[hist.length - 1] : (state.last_history_entry || null);
+  if(!last) return !!state.feedback_required;
+  const vote = String(last.feedback_vote || '').trim().toLowerCase();
+  if(vote === 'like' || vote === 'dislike') return false;
+  // One-click video: unrated night concept must not block the reel.
+  if(opts && opts.forVideo){
+    const media = String(last.media_kind || '').toLowerCase();
+    const kind = String(last.kind || '').toLowerCase();
+    return media === 'video' || kind.startsWith('video_');
+  }
+  return true;
+}
+function scheduleFeedbackPrompt(state){
+  const zone = document.getElementById('feedbackZone');
+  clearTimeout(feedbackTimer);
+  feedbackTimer = null;
+  hideFeedbackToast();
+  // Keep optional side form closed after render/refresh.
+  // Do NOT auto-open the blocking gate here — only when user tries next action.
+  // BUT: always surface the feedback zone when a rating is pending (photo or video).
+  if(zone) zone.classList.remove('open', 'required', 'blocking');
+  if(!pendingAfterFeedback) closeFeedbackGate();
+  const hasResult = !!(state && (state.has_final || state.has_video || (state.history || []).length));
+  if(!hasResult){
+    feedbackPromptedHistoryId = '';
+    feedbackToastDismissedFor = '';
+    return;
+  }
+  const needs = latestHistoryNeedsFeedback(state);
+  state.feedback_required = needs;
+  if(!needs){
+    closeFeedbackGate();
+    return;
+  }
+  const hist = Array.isArray(state.history) ? state.history : [];
+  const history = hist.length ? hist[hist.length - 1] : (state.last_history_entry || {});
+  const renderId = String(history.id || 'current');
+  if(feedbackPromptedHistoryId !== renderId){
+    feedbackVote = '';
+    setFeedbackVote('');
+    feedbackToastDismissedFor = '';
+    const issue = document.getElementById('feedbackIssue');
+    const comment = document.getElementById('feedbackComment');
+    const gateComment = document.getElementById('feedbackGateComment');
+    const contact = document.getElementById('feedbackContact');
+    const status = document.getElementById('feedbackStatus');
+    if(issue) issue.value = '';
+    if(comment) comment.value = '';
+    if(gateComment) gateComment.value = '';
+    if(contact) contact.value = '';
+    if(status) status.textContent = 'Оценка нужна перед следующей генерацией, правкой или новым проектом.';
+    const title = document.getElementById('feedbackTitle');
+    if(title){
+      title.textContent = ((history.media_kind || history.kind || '') + '').includes('video')
+        ? 'Оценка этого видео'
+        : 'Оценка этой генерации';
+    }
+    feedbackPromptedHistoryId = renderId;
+  }
+  if(zone){
+    zone.classList.remove('open', 'required', 'blocking');
+  }
+  // Immediately require rating after a new result (photo or video) — popup only.
+  openFeedbackGate({
+    message: 'Поставьте оценку результата — без этого нельзя продолжить работу.'
+  });
+}
+function requireFeedbackBeforeAction(pending){
+  // Правки по разметке/чату не блокируем оценкой — иначе нельзя итеративно править.
+  // Оценка обязательна перед новой генерацией или новым проектом.
+  const kind = (pending && pending.type) || '';
+  if(kind === 'chat') return false;
+  const forVideo = kind === 'generate' && (studioMode === 'video' || videoPipelineActive);
+  if(latestHistoryNeedsFeedback(lastState, {forVideo})){
+    if(lastState) lastState.feedback_required = true;
+    promptFeedbackRequired(
+      'Сначала оцените предыдущий результат (Нравится / Не нравится) — после оценки продолжим.',
+      pending || null
+    );
+    return true;
+  }
+  return false;
+}
+async function resumePendingAfterFeedback(){
+  const pending = pendingAfterFeedback;
+  pendingAfterFeedback = null;
+  if(!pending || !pending.type) return;
+  const statusEl = document.getElementById('feedbackStatus');
+  if(statusEl) statusEl.textContent = 'Оценка принята — продолжаем…';
+  const gateStatus = document.getElementById('feedbackGateStatus');
+  if(gateStatus) gateStatus.textContent = 'Оценка принята — продолжаем…';
+  if(pending.type === 'generate'){
+    if(typeof pending.resume === 'function'){
+      await pending.resume();
+      return;
+    }
+    if(studioMode === 'video'){
+      await runSelectedVideo();
+      return;
+    }
+    await runStudioGeneration({skipFeedbackGate:true});
+    return;
+  }
+  if(pending.type === 'chat'){
+    await sendChat({skipFeedbackGate:true});
+    return;
+  }
+  if(pending.type === 'createProject'){
+    await createProject({skipFeedbackGate:true});
+  }
+}
+async function submitFeedback(opts){
+  const statusEl = document.getElementById('feedbackStatus');
+  const gateStatus = document.getElementById('feedbackGateStatus');
+  const btn = document.getElementById('feedbackSubmitBtn');
+  const fromGate = !!(opts && opts.fromGate);
+  if(statusEl) statusEl.textContent = '';
+  if(!feedbackVote){
+    if(statusEl) statusEl.textContent = 'Выберите: нравится или не нравится.';
+    openFeedbackGate({message:'Сначала выберите: Нравится или Не нравится.'});
+    return;
+  }
+  if(!projectId) return;
+  try{
+    if(btn) btn.disabled = true;
+    setFeedbackGateBusy(true);
+    const fd = new FormData();
+    fd.append('vote', feedbackVote);
+    fd.append('issue_type', document.getElementById('feedbackIssue')?.value || '');
+    const gateComment = (document.getElementById('feedbackGateComment')?.value || '').trim();
+    const sideComment = (document.getElementById('feedbackComment')?.value || '').trim();
+    const comment = fromGate ? (gateComment || sideComment) : (sideComment || gateComment);
+    fd.append('comment', comment);
+    fd.append('contact', document.getElementById('feedbackContact')?.value || '');
+    await api(`/api/projects/${projectId}/feedback`, {method:'POST', body: fd});
+    const gateCommentEl = document.getElementById('feedbackGateComment');
+    if(gateCommentEl) gateCommentEl.value = '';
+    if(document.getElementById('feedbackComment') && fromGate && gateComment){
+      document.getElementById('feedbackComment').value = gateComment;
+    }
+    if(statusEl) statusEl.textContent = 'Спасибо! Оценка сохранена к этой версии в истории.';
+    if(gateStatus){
+      gateStatus.classList.remove('err');
+      gateStatus.textContent = 'Спасибо! Продолжаем…';
+    }
+    lastState.feedback_required = false;
+    if(Array.isArray(lastState.history) && lastState.history.length){
+      const last = lastState.history[lastState.history.length - 1];
+      if(last) last.feedback_vote = feedbackVote;
+    }
+    const zone = document.getElementById('feedbackZone');
+    if(zone) zone.classList.remove('required', 'blocking');
+    hideFeedbackToast();
+    dismissFeedbackToast();
+    closeFeedbackGate();
+    try{ await refreshState(); }catch(_){}
+    await resumePendingAfterFeedback();
+  }catch(err){
+    const msg = String(err.message || err);
+    if(statusEl) statusEl.textContent = msg;
+    if(gateStatus){
+      gateStatus.classList.add('err');
+      gateStatus.textContent = msg;
+    }
+    if(fromGate) openFeedbackGate({});
+  }finally{
+    if(btn) btn.disabled = false;
+    setFeedbackGateBusy(false);
+  }
+}
+function maybeShowWelcomeTour(){
+  try{
+    if(localStorage.getItem('niteos_studio_tour_seen') === '1') return;
+  }catch(_){}
+  setTimeout(() => openStudioTour(), 500);
+}
+function previewHistory(url){
+  const img = document.getElementById('finalImg');
+  if(!img || !url) return;
+  const next = url + (url.includes('?') ? '&' : '?') + 't=' + Date.now();
+  img.onload = () => syncEditMarkupCanvas();
+  img.onerror = () => setError('Не удалось загрузить версию из истории');
+  img.src = next;
+  clearEditMarkup();
+}
+async function restoreHistoryVersion(historyId, previewUrl, opts){
+  if(!projectId || historyId == null || historyId === '') return;
+  if(busy){
+    setError('Дождитесь окончания текущей операции, затем переключите версию');
+    return;
+  }
+  const mediaKind = (opts && opts.mediaKind) || 'image';
+  const videoUrl = (opts && opts.videoUrl) || '';
+  if(mediaKind === 'video' || videoUrl){
+    setStudioMode('video');
+    lastState = Object.assign({}, lastState, {
+      has_video: true,
+      video_url: videoUrl || lastState.video_url,
+    });
+    updateVideoPanel(lastState);
+  } else if(previewUrl){
+    previewHistory(previewUrl);
+  }
+  try{
+    setBusy(true, 'Восстанавливаю версию #' + historyId + ' как активную…');
+    const fd = new FormData();
+    fd.append('history_id', String(historyId));
+    const data = await api(`/api/projects/${projectId}/studio/restore-history`, {method:'POST', body: fd});
+    clearEditMarkup();
+    await refreshState();
+    setBusy(false, data.message || ('Версия #' + historyId + ' активна.'));
+    try{
+      document.getElementById('resultCard')?.scrollIntoView({behavior:'smooth', block:'center'});
+    }catch(_){}
+  }catch(err){
+    setError(String(err.message || err));
+    busy = false;
+  }
+}
+function setMarkupEnabled(on){
+  editMarkupReady = !!on;
+  const canvas = document.getElementById('editMarkupCanvas');
+  const stage = document.getElementById('resultStage');
+  if(canvas){
+    canvas.classList.toggle('hidden', !on);
+    canvas.setAttribute('aria-hidden', on ? 'false' : 'true');
+  }
+  if(stage) stage.classList.toggle('is-editing', !!on);
+  if(on) syncEditMarkupCanvas();
+  updateEditToolUi();
+}
+function updateEditToolUi(){
+  const brush = document.getElementById('editBrushBtn');
+  const eraser = document.getElementById('editEraserBtn');
+  const canvas = document.getElementById('editMarkupCanvas');
+  const hint = document.getElementById('markupHint');
+  const input = document.getElementById('chatInput');
+  const toolOn = !!editTool && editMarkupReady;
+  if(brush) brush.classList.toggle('active', editTool === 'brush');
+  if(eraser) eraser.classList.toggle('active', editTool === 'eraser');
+  if(canvas){
+    canvas.classList.toggle('tool-on', toolOn);
+    canvas.style.cursor = editTool === 'eraser' ? 'cell' : (editTool === 'brush' ? 'crosshair' : 'default');
+  }
+  syncQuickPromptsForTool();
+  if(hint){
+    if(editTool === 'eraser' || editTool === 'brush' || markupUsedBrush || markupUsedEraser){
+      hint.style.display = 'block';
+      hint.classList.add('busy');
+      const parts = [];
+      if(editTool === 'brush') parts.push('Шаг 1: рисуйте красным на фото');
+      if(editTool === 'eraser') parts.push('Шаг 1: рисуйте голубым на фото');
+      if(markupHasPaint()) parts.push('зона есть — дальше шаг 2 в чате справа');
+      else parts.push('сначала отметьте зону на фото');
+      hint.textContent = parts.join(' · ') + '.';
+    } else {
+      hint.style.display = 'none';
+      hint.classList.remove('busy');
+    }
+  }
+  if(input){
+    if(markupHasPaint()){
+      input.placeholder = markupUsedEraser && !markupUsedBrush
+        ? 'Шаг 2: выберите шаблон «Убери…» или напишите, что убрать в голубой зоне…'
+        : (markupUsedBrush && !markupUsedEraser
+          ? 'Шаг 2: выберите шаблон «Измени…/Проставь…» или напишите, что сделать в красной зоне…'
+          : 'Шаг 2: выберите шаблон(ы) или опишите правку по отмеченным зонам…');
+    } else if(editTool === 'eraser'){
+      input.placeholder = 'Сначала отметьте зону голубым на фото…';
+    } else if(editTool === 'brush'){
+      input.placeholder = 'Сначала отметьте зону красным на фото…';
+    } else {
+      input.placeholder = 'Можно просто написать: убери левый / сделай теплее / проставь прожектор у входа…';
+    }
+  }
+  updateMarkupNextStep();
+}
+function updateMarkupNextStep(){
+  const box = document.getElementById('markupNextStep');
+  const panel = document.getElementById('chatStepPanel');
+  const chatCard = document.getElementById('chatCard');
+  const chatWrap = document.getElementById('chatSendTour');
+  const idleNote = document.getElementById('chatIdleNote');
+  const quick = document.getElementById('quickPrompts');
+  const title = document.getElementById('chatStepTitle');
+  const hasPaint = !tourActive && markupHasPaint();
+  const needsText = hasPaint && !(document.getElementById('chatInput')?.value || '').trim();
+  if(box) box.classList.toggle('open', hasPaint);
+  if(panel) panel.classList.toggle('open', hasPaint);
+  if(chatCard) chatCard.classList.toggle('awaiting-instruction', needsText);
+  if(chatWrap) chatWrap.classList.toggle('needs-instruction', needsText);
+  if(idleNote) idleNote.style.display = hasPaint ? 'none' : '';
+  if(quick) quick.classList.toggle('awaiting', hasPaint);
+  if(title){
+    if(markupUsedBrush && markupUsedEraser){
+      title.textContent = 'Красная и голубая зоны отмечены — что сделать?';
+    } else if(markupUsedEraser && !markupUsedBrush){
+      title.textContent = 'Голубая зона отмечена — что убрать?';
+    } else if(markupUsedBrush){
+      title.textContent = 'Красная зона отмечена — что изменить?';
+    } else {
+      title.textContent = 'Зона отмечена — что сделать?';
+    }
+  }
+}
+function revealChatStepPanel(focusInput){
+  syncQuickPromptsForTool();
+  updateMarkupNextStep();
+  const card = document.getElementById('chatCard');
+  try{ card?.scrollIntoView({behavior:'smooth', block:'start'}); }catch(_){}
+  if(focusInput) focusChatInstruction();
+  else {
+    const root = document.getElementById('quickPrompts');
+    try{ root?.scrollIntoView({behavior:'smooth', block:'nearest'}); }catch(_){}
+  }
+}
+function focusChatInstruction(){
+  const input = document.getElementById('chatInput');
+  const wrap = document.getElementById('chatSendTour');
+  syncQuickPromptsForTool();
+  updateMarkupNextStep();
+  try{ document.getElementById('chatCard')?.scrollIntoView({behavior:'smooth', block:'start'}); }catch(_){}
+  if(wrap) wrap.classList.add('needs-instruction');
+  if(input){
+    try{ input.focus({preventScroll:true}); }catch(_){ try{ input.focus(); }catch(__){} }
+  }
+  const box = document.getElementById('statusBox');
+  if(box){
+    box.classList.remove('busy', 'err');
+    box.textContent = 'В чате справа: напишите правку или нажмите шаблон, затем «Отправить».';
+  }
+}
+function scrollToQuickTemplates(){
+  syncQuickPromptsForTool();
+  updateMarkupNextStep();
+  const root = document.getElementById('quickPrompts');
+  try{ document.getElementById('chatCard')?.scrollIntoView({behavior:'smooth', block:'start'}); }catch(_){}
+  try{ root?.scrollIntoView({behavior:'smooth', block:'nearest'}); }catch(_){}
+  if(root){
+    root.classList.add('awaiting');
+    root.style.outline = '2px solid #4fd1c5';
+    setTimeout(() => { try{ root.style.outline = ''; }catch(_){} }, 1600);
+  }
+  const box = document.getElementById('statusBox');
+  if(box){
+    box.classList.remove('busy', 'err');
+    box.textContent = markupUsedEraser && !markupUsedBrush
+      ? 'В чате: нажмите голубой шаблон «Убери…», затем «Отправить».'
+      : (markupUsedBrush && !markupUsedEraser
+        ? 'В чате: нажмите красный шаблон, затем «Отправить».'
+        : 'В чате: выберите шаблон(ы), затем «Отправить».');
+  }
+}
+function promptMarkupInstructionNeeded(){
+  updateMarkupNextStep();
+  setError('Зона отмечена. В чате справа выберите шаблон или напишите, что сделать — затем «Отправить».');
+  revealChatStepPanel(false);
+  highlightChatInstruction();
+}
+function highlightChatInstruction(){
+  const wrap = document.getElementById('chatSendTour');
+  const input = document.getElementById('chatInput');
+  const card = document.getElementById('chatCard');
+  if(card) card.classList.add('awaiting-instruction');
+  if(wrap){
+    wrap.classList.add('needs-instruction');
+    setTimeout(() => {
+      if(input && !(input.value || '').trim() && markupHasPaint()) wrap.classList.add('needs-instruction');
+    }, 0);
+  }
+  try{ input?.focus({preventScroll:true}); }catch(_){ try{ input?.focus(); }catch(__){} }
+}
+function syncQuickPromptsForTool(){
+  const brushGroup = document.getElementById('quickBrushGroup');
+  const eraserGroup = document.getElementById('quickEraserGroup');
+  const root = document.getElementById('quickPrompts');
+  // Show chat quick buttons only after the user has actually drawn —
+  // turning on brush/eraser alone must keep attention on the photo.
+  // During the interactive tour, keep chat panels closed so demos stay on the result.
+  const showPanels = !tourActive && (markupUsedBrush || markupUsedEraser);
+  if(brushGroup) brushGroup.classList.toggle('open', showPanels && markupUsedBrush);
+  if(eraserGroup) eraserGroup.classList.toggle('open', showPanels && markupUsedEraser);
+  if(!root) return;
+  root.querySelectorAll('button[data-tool="any"]').forEach(btn => {
+    btn.classList.remove('dim');
+  });
+  // Do not scroll to chat on tool toggle — user must stay on the image to draw.
+}
+function toggleEditTool(tool){
+  const next = (tool === 'eraser') ? 'eraser' : 'brush';
+  const turningOn = editTool !== next;
+  editTool = turningOn ? next : null;
+  updateEditToolUi();
+  if(turningOn){
+    if(lastState.has_final) setMarkupEnabled(true);
+    const stage = document.getElementById('resultStage');
+    const canvas = document.getElementById('editMarkupCanvas');
+    try{ stage?.scrollIntoView({behavior:'smooth', block:'nearest'}); }catch(_){}
+    try{ canvas?.focus({preventScroll:true}); }catch(_){ try{ canvas?.focus(); }catch(__){} }
+    const box = document.getElementById('statusBox');
+    if(box){
+      box.classList.remove('busy', 'err');
+      box.textContent = editTool === 'eraser'
+        ? 'Ластик включён: рисуйте голубым на фото, затем опишите правку в чате'
+        : 'Кисть включена: рисуйте красным на фото, затем опишите правку в чате';
+    }
+  }
+}
+function setEditTool(tool){
+  // legacy alias
+  toggleEditTool(tool);
+}
+function updateEditBrushSize(v){
+  editBrushSize = Math.max(4, Math.min(48, Number(v) || 16));
+}
+function getFinalImageLayout(){
+  const stage = document.getElementById('resultStage');
+  const img = document.getElementById('finalImg');
+  if(!stage || !img || !img.naturalWidth || !img.naturalHeight) return null;
+  const sw = stage.clientWidth || 1;
+  const sh = stage.clientHeight || 1;
+  const nw = img.naturalWidth;
+  const nh = img.naturalHeight;
+  const scale = Math.min(sw / nw, sh / nh);
+  const dw = nw * scale;
+  const dh = nh * scale;
+  const ox = (sw - dw) / 2;
+  const oy = (sh - dh) / 2;
+  return {sw, sh, nw, nh, dw, dh, ox, oy, scale};
+}
+function syncEditMarkupCanvas(){
+  const canvas = document.getElementById('editMarkupCanvas');
+  const layout = getFinalImageLayout();
+  if(!canvas || !layout) return;
+  canvas.style.left = layout.ox + 'px';
+  canvas.style.top = layout.oy + 'px';
+  canvas.style.width = layout.dw + 'px';
+  canvas.style.height = layout.dh + 'px';
+  const w = Math.max(1, Math.round(layout.dw));
+  const h = Math.max(1, Math.round(layout.dh));
+  if(canvas.width !== w || canvas.height !== h){
+    const prev = document.createElement('canvas');
+    prev.width = canvas.width; prev.height = canvas.height;
+    if(canvas.width && canvas.height){
+      prev.getContext('2d').drawImage(canvas, 0, 0);
+    }
+    canvas.width = w; canvas.height = h;
+    if(prev.width && prev.height){
+      canvas.getContext('2d').drawImage(prev, 0, 0, w, h);
+    }
+  }
+}
+function canvasPoint(e){
+  const canvas = document.getElementById('editMarkupCanvas');
+  const rect = canvas.getBoundingClientRect();
+  const x = (e.clientX - rect.left) * (canvas.width / Math.max(1, rect.width));
+  const y = (e.clientY - rect.top) * (canvas.height / Math.max(1, rect.height));
+  return {x, y};
+}
+function editDrawPoint(e, isStart){
+  const canvas = document.getElementById('editMarkupCanvas');
+  if(!canvas || !editMarkupReady || !editTool) return;
+  const ctx = canvas.getContext('2d');
+  const p = canvasPoint(e);
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.lineWidth = editBrushSize;
+  if(editTool === 'eraser'){
+    // Cyan = REMOVE luminaires (not destination-out wipe)
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.strokeStyle = 'rgba(79,209,197,0.85)';
+    ctx.fillStyle = 'rgba(79,209,197,0.85)';
+    if(!markupUsedEraser){ markupUsedEraser = true; updateEditToolUi(); }
+  } else {
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.strokeStyle = 'rgba(255,70,70,0.88)';
+    ctx.fillStyle = 'rgba(255,70,70,0.88)';
+    if(!markupUsedBrush){ markupUsedBrush = true; updateEditToolUi(); }
+  }
+  if(isStart || !editLastPoint){
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, editBrushSize / 2, 0, Math.PI * 2);
+    ctx.fill();
+  } else {
+    ctx.beginPath();
+    ctx.moveTo(editLastPoint.x, editLastPoint.y);
+    ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+  }
+  editLastPoint = p;
+}
+function bindMarkupCanvas(){
+  if(markupBound) return;
+  const canvas = document.getElementById('editMarkupCanvas');
+  if(!canvas) return;
+  markupBound = true;
+  canvas.addEventListener('pointerdown', (e)=>{
+    if(!editMarkupReady || !editTool || busy) return;
+    editDrawing = true;
+    editDrawPoint(e, true);
+    canvas.setPointerCapture(e.pointerId);
+  });
+  canvas.addEventListener('pointermove', (e)=>{
+    if(!editMarkupReady || !editTool || !editDrawing) return;
+    editDrawPoint(e, false);
+  });
+  canvas.addEventListener('pointerup', ()=>{
+    editDrawing=false; editLastPoint=null;
+    if(markupHasPaint()){
+      updateEditToolUi();
+      openZoneIntentPanel();
+      const box = document.getElementById('statusBox');
+      if(box && !busy){
+        box.classList.remove('busy', 'err');
+        box.textContent = 'Зона отмечена → в окне: что сделать с этим местом, затем «Отправить правку».';
+      }
+    }
+  });
+  canvas.addEventListener('pointerleave', ()=>{ editDrawing=false; editLastPoint=null; });
+  window.addEventListener('resize', ()=>{ if(editMarkupReady) syncEditMarkupCanvas(); });
+}
+function openZoneIntentPanel(){
+  const overlay = document.getElementById('zoneIntentOverlay');
+  const title = document.getElementById('zoneIntentTitle');
+  const lead = document.getElementById('zoneIntentLead');
+  const input = document.getElementById('zoneIntentInput');
+  if(!overlay) return;
+  if(title){
+    if(markupUsedBrush && markupUsedEraser){
+      title.textContent = 'Красная и голубая зоны — что сделать?';
+    } else if(markupUsedEraser && !markupUsedBrush){
+      title.textContent = 'Голубая зона — что убрать?';
+    } else if(markupUsedBrush){
+      title.textContent = 'Красная зона — что сделать здесь?';
+    } else {
+      title.textContent = 'Что сделать с этой зоной?';
+    }
+  }
+  if(lead){
+    lead.textContent = markupUsedEraser && !markupUsedBrush
+      ? 'Отмечено место для удаления света. Выберите «Убрать» или опишите своими словами.'
+      : 'Отмечено место на фасаде. Можно поставить прожектор/линейный, изменить или убрать — остальное не тронем.';
+  }
+  // Prefer brush presets when both used; hide irrelevant chips lightly via opacity.
+  document.querySelectorAll('#zoneIntentPresets [data-intent]').forEach((btn)=>{
+    const intent = btn.getAttribute('data-intent') || '';
+    let show = true;
+    if(markupUsedEraser && !markupUsedBrush){
+      show = intent === 'remove' || intent === 'change';
+    } else if(markupUsedBrush && !markupUsedEraser){
+      show = intent !== 'remove';
+    }
+    btn.style.display = show ? '' : 'none';
+  });
+  overlay.classList.add('open');
+  try{ input?.focus({preventScroll:true}); }catch(_){ try{ input?.focus(); }catch(__){} }
+  updateMarkupNextStep();
+}
+function closeZoneIntentPanel(clearInput){
+  const overlay = document.getElementById('zoneIntentOverlay');
+  const input = document.getElementById('zoneIntentInput');
+  if(overlay) overlay.classList.remove('open');
+  if(clearInput && input) input.value = '';
+}
+function pickZoneIntent(text){
+  const input = document.getElementById('zoneIntentInput');
+  if(!input) return;
+  const next = String(text || '').trim();
+  if(!next) return;
+  const cur = (input.value || '').trim();
+  input.value = cur ? (cur.replace(/\s+$/,'') + '\n' + next) : next;
+  try{ input.focus({preventScroll:true}); }catch(_){}
+}
+async function submitZoneIntent(){
+  const zoneInput = document.getElementById('zoneIntentInput');
+  const chatInput = document.getElementById('chatInput');
+  const text = (zoneInput && zoneInput.value || '').trim();
+  if(!text){
+    setError('Напишите или выберите, что сделать с зоной');
+    try{ zoneInput?.focus(); }catch(_){}
+    return;
+  }
+  if(!markupHasPaint()){
+    setError('Сначала отметьте зону на фото');
+    return;
+  }
+  if(chatInput) chatInput.value = text;
+  closeZoneIntentPanel(false);
+  await sendChat({skipFeedbackGate:true});
+  if(zoneInput) zoneInput.value = '';
+}
+function clearEditMarkup(){
+  const canvas = document.getElementById('editMarkupCanvas');
+  if(canvas){
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+  editTool = null;
+  editDrawing = false;
+  editLastPoint = null;
+  markupUsedBrush = false;
+  markupUsedEraser = false;
+  closeZoneIntentPanel(true);
+  updateEditToolUi();
+  const next = document.getElementById('markupNextStep');
+  if(next) next.classList.remove('open');
+  const panel = document.getElementById('chatStepPanel');
+  if(panel) panel.classList.remove('open');
+  const card = document.getElementById('chatCard');
+  if(card) card.classList.remove('awaiting-instruction');
+  const wrap = document.getElementById('chatSendTour');
+  if(wrap) wrap.classList.remove('needs-instruction');
+  const quick = document.getElementById('quickPrompts');
+  if(quick) quick.classList.remove('awaiting');
+  const idleNote = document.getElementById('chatIdleNote');
+  if(idleNote) idleNote.style.display = '';
+}
+function markupHasPaint(){
+  const canvas = document.getElementById('editMarkupCanvas');
+  if(!canvas || !canvas.width || !canvas.height) return false;
+  const ctx = canvas.getContext('2d');
+  const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+  for(let i = 3; i < data.length; i += 16){
+    if(data[i] > 8) return true;
+  }
+  return false;
+}
+async function exportEditAnnotationBlob(){
+  const canvas = document.getElementById('editMarkupCanvas');
+  if(!canvas || !markupHasPaint()) return null;
+  const layout = getFinalImageLayout();
+  const out = document.createElement('canvas');
+  if(layout){
+    out.width = Math.max(1, Math.round(layout.nw));
+    out.height = Math.max(1, Math.round(layout.nh));
+  } else {
+    const maxSide = 1600;
+    const sw = canvas.width, sh = canvas.height;
+    const scale = Math.min(1, maxSide / Math.max(sw, sh));
+    out.width = Math.max(1, Math.round(sw * scale));
+    out.height = Math.max(1, Math.round(sh * scale));
+  }
+  const ctx = out.getContext('2d');
+  ctx.clearRect(0, 0, out.width, out.height);
+  ctx.drawImage(canvas, 0, 0, out.width, out.height);
+  return await new Promise((resolve) => out.toBlob((b) => resolve(b || null), 'image/png'));
+}
+function resetStudioUi(){
+  lastState = {};
+  editTool = null;
+  editDrawing = false;
+  editLastPoint = null;
+  markupUsedBrush = false;
+  markupUsedEraser = false;
+  feedbackVote = '';
+  feedbackPromptedHistoryId = '';
+  feedbackToastDismissedFor = '';
+  if(feedbackTimer){ clearTimeout(feedbackTimer); feedbackTimer = null; }
+
+  const dropzone = document.getElementById('dropzone');
+  if(dropzone) dropzone.classList.remove('has-image', 'dragover');
+  const sourceImg = document.getElementById('sourceImg');
+  if(sourceImg){ sourceImg.removeAttribute('src'); sourceImg.src = ''; }
+  const finalImg = document.getElementById('finalImg');
+  if(finalImg){
+    finalImg.onload = null;
+    finalImg.removeAttribute('src');
+    finalImg.src = '';
+  }
+  clearEditMarkup();
+  setMarkupEnabled(false);
+  updateVideoPanel({});
+
+  const hist = document.getElementById('historyStrip');
+  if(hist) hist.innerHTML = '<div class="muted">История версий появится после генерации</div>';
+  const hint = document.getElementById('activeHistoryHint');
+  if(hint) hint.textContent = '';
+  renderChat([]);
+
+  const chatInput = document.getElementById('chatInput');
+  if(chatInput) chatInput.value = '';
+  const sourceFile = document.getElementById('sourceFile');
+  if(sourceFile) sourceFile.value = '';
+
+  document.getElementById('downloadBtn').disabled = true;
+  const copyBtn = document.getElementById('copyFinalBtn');
+  if(copyBtn) copyBtn.disabled = true;
+  document.getElementById('chatBtn').disabled = !projectId;
+  document.getElementById('startBtn').disabled = !projectId;
+
+  const feedbackZone = document.getElementById('feedbackZone');
+  if(feedbackZone) feedbackZone.classList.remove('open', 'required', 'blocking');
+  closeFeedbackGate();
+  hideFeedbackToast();
+  pendingAfterFeedback = null;
+  setFeedbackVote('');
+  updateEditToolUi();
+}
+async function resolveStudioImageModel(){
+  const sel = document.getElementById('photoModelSelect');
+  if(sel && sel.value){
+    studioImageModel = String(sel.value).trim();
+    try{ localStorage.setItem('niteos_routerai_model', studioImageModel); }catch(_){}
+    return studioImageModel;
+  }
+  if(studioImageModel) return studioImageModel;
+  try{
+    const health = await api('/api/health');
+    studioImageModel = String(health.routerai_model || '').trim();
+  }catch(_){
+    studioImageModel = '';
+  }
+  return studioImageModel;
+}
+async function refreshRouteraiBalance(){
+  try{ return await api('/api/routerai/credits'); }catch(_){ return null; }
+}
+async function assertRouteraiSpend(kind){
+  const data = await refreshRouteraiBalance();
+  if(!data || data.credits == null) return true;
+  if(kind === 'video' && data.video_ok === false){
+    throw Object.assign(new Error(data.message || 'Недостаточно баланса для видео'), {status:402});
+  }
+  if(kind === 'photo' && data.photo_ok === false){
+    throw Object.assign(new Error(data.message || 'Баланс низкий для фото — сначала пополните, чтобы хватало на видео'), {status:402});
+  }
+  return true;
+}
+async function openMyProjects(){
+  const modal = document.getElementById('myProjectsModal');
+  if(modal) modal.classList.add('open');
+  const rename = document.getElementById('projectRenameInput');
+  if(rename) rename.value = (lastState && lastState.project_name) || '';
+  await loadMyProjectsList();
+}
+function closeMyProjects(){
+  document.getElementById('myProjectsModal')?.classList.remove('open');
+}
+async function loadMyProjectsList(){
+  const box = document.getElementById('myProjectsList');
+  const status = document.getElementById('myProjectsStatus');
+  if(!box) return;
+  if(status) status.textContent = 'Загружаю…';
+  box.innerHTML = '';
+  try{
+    const data = await api('/api/auth/my-projects?limit=40');
+    const items = Array.isArray(data.projects) ? data.projects : [];
+    if(status){
+      status.textContent = items.length
+        ? ('Найдено: ' + items.length)
+        : (data.ok === false ? 'Войдите через MAX, чтобы видеть свои проекты' : 'Пока нет проектов — создайте новый');
+    }
+    if(!items.length){
+      box.innerHTML = '<div class="muted">Здесь появятся ваши фото- и видео-проекты</div>';
+      return;
+    }
+    const stamp = Date.now();
+    box.innerHTML = items.map(p => {
+      const id = String(p.id || '');
+      const name = p.name || ('Проект ' + id);
+      const active = id && id === String(projectId || '');
+      const thumb = p.thumb_url || p.final_url || p.source_url || '';
+      const when = p.updated_at || p.created_at || '';
+      const tags = [];
+      if(p.has_final) tags.push('<span class="tag">фото</span>');
+      if(p.has_video) tags.push('<span class="tag vid">видео</span>');
+      if(p.history_count) tags.push('<span class="tag">' + esc(String(p.history_count)) + ' версий</span>');
+      return `<button type="button" class="my-proj-item${active ? ' active' : ''}" data-pid="${esc(id)}">
+        ${thumb ? `<img src="${esc(thumb)}?t=${stamp}" alt="" loading="lazy">` : '<div class="ph">нет превью</div>'}
+        <div>
+          <div class="t">${esc(name)}</div>
+          <div class="m">${esc(when)}${id ? (' · ' + esc(id)) : ''}</div>
+          <div class="tags">${tags.join('')}</div>
+        </div>
+        <span class="muted" style="font-size:12px">${active ? 'сейчас' : 'открыть'}</span>
+      </button>`;
+    }).join('');
+    box.querySelectorAll('.my-proj-item[data-pid]').forEach(btn => {
+      btn.addEventListener('click', () => openMyProject(btn.getAttribute('data-pid')));
+    });
+  }catch(err){
+    if(status) status.textContent = String(err.message || err);
+  }
+}
+async function openMyProject(pid){
+  const id = String(pid || '').trim();
+  if(!id) return;
+  closeMyProjects();
+  location.href = '/studio?project=' + encodeURIComponent(id);
+}
+async function renameCurrentProject(){
+  if(!projectId){ setError('Сначала откройте или создайте проект'); return; }
+  const input = document.getElementById('projectRenameInput');
+  const name = ((input && input.value) || '').trim();
+  if(!name){ setError('Введите имя проекта'); return; }
+  try{
+    const body = new URLSearchParams({name});
+    const data = await api(`/api/projects/${projectId}/rename`, {method:'POST', body});
+    const next = (data && (data.name || data.project_name)) || name;
+    if(lastState) lastState.project_name = next;
+    syncProjectLabel(next);
+    const st = document.getElementById('myProjectsStatus');
+    if(st) st.textContent = 'Имя сохранено';
+    await loadMyProjectsList();
+  }catch(err){
+    setError(String(err.message || err));
+  }
+}
+function syncProjectLabel(name){
+  const el = document.getElementById('projectLabel');
+  if(!el) return;
+  const n = String(name || (lastState && lastState.project_name) || '').trim();
+  el.textContent = n ? n : ('Проект ' + (projectId || ''));
+}
+document.getElementById('myProjectsModal')?.addEventListener('click', (e) => {
+  if(e.target && e.target.id === 'myProjectsModal') closeMyProjects();
+});
+async function loadStudioModels(){
+  try{
+    const data = await api('/api/routerai-models');
+    const sel = document.getElementById('photoModelSelect');
+    if(sel && Array.isArray(data.models)){
+      const saved = (()=>{ try{ return localStorage.getItem('niteos_routerai_model') || ''; }catch(_){ return ''; }})();
+      const def = saved || data.default || (data.models[0] && data.models[0].id) || '';
+      sel.innerHTML = data.models.map(m => {
+        const id = m.id || '';
+        const label = m.label || id;
+        return `<option value="${esc(id)}"${id===def?' selected':''}>${esc(label)}</option>`;
+      }).join('');
+      if(def) sel.value = def;
+      studioImageModel = sel.value || def;
+      sel.onchange = () => {
+        studioImageModel = sel.value || '';
+        try{ localStorage.setItem('niteos_routerai_model', studioImageModel); }catch(_){}
+      };
+    }
+  }catch(_){}
+  try{
+    const data = await api('/api/routerai-video-models');
+    const sel = document.getElementById('videoModelSelect');
+    if(sel && Array.isArray(data.models)){
+      const saved = (()=>{ try{ return localStorage.getItem('niteos_routerai_video_model') || ''; }catch(_){ return ''; }})();
+      const def = saved || data.default || (data.models[0] && data.models[0].id) || '';
+      sel.innerHTML = data.models.map(m => {
+        const id = m.id || '';
+        const label = m.label || id;
+        return `<option value="${esc(id)}"${id===def?' selected':''}>${esc(label)}</option>`;
+      }).join('');
+      if(def) sel.value = def;
+      sel.onchange = () => {
+        try{ localStorage.setItem('niteos_routerai_video_model', sel.value || ''); }catch(_){}
+      };
+    }
+  }catch(_){}
+  initVideoDurationSelect();
+}
+function getVideoDurationSec(){
+  const el = document.getElementById('videoDurationRange');
+  let n = el ? parseInt(el.value, 10) : 8;
+  if(!Number.isFinite(n)) n = 8;
+  return Math.max(5, Math.min(15, n));
+}
+function syncVideoDurationLabel(){
+  const label = document.getElementById('videoDurationLabel');
+  if(label) label.textContent = getVideoDurationSec() + ' сек';
+}
+function initVideoDurationSelect(){
+  const el = document.getElementById('videoDurationRange');
+  if(!el) return;
+  const saved = (()=>{ try{ return localStorage.getItem('niteos_video_duration_sec') || ''; }catch(_){ return ''; }})();
+  const n = parseInt(saved, 10);
+  if(Number.isFinite(n) && n >= 5 && n <= 15) el.value = String(n);
+  const persist = () => {
+    syncVideoDurationLabel();
+    try{ localStorage.setItem('niteos_video_duration_sec', String(getVideoDurationSec())); }catch(_){}
+  };
+  el.oninput = persist;
+  el.onchange = persist;
+  syncVideoDurationLabel();
+}
+async function createProject(opts){
+  if(!(opts && opts.skipFeedbackGate) && requireFeedbackBeforeAction({type:'createProject'})) return;
+  try{
+    setBusy(true, 'Создаю новый проект…');
+    const body = new URLSearchParams({name:'', mode:'agent_studio'});
+    if(projectId) body.append('from_project_id', projectId);
+    const data = await api('/api/projects', {method:'POST', body});
+    projectId = data.id || data.project_id || (data.project && (data.project.id || data.project.project_id)) || '';
+    if(!projectId) throw new Error('Не удалось создать проект');
+    history.replaceState({}, '', '/studio?project=' + projectId);
+    syncProjectLabel(data.name || data.project_name || '');
+    const dealerLink = document.getElementById('dealerLink');
+    if(dealerLink) dealerLink.href = '/dealer?project=' + projectId;
+    resetStudioUi();
+    syncPhotoWarnVisibility();
+    setBusy(false, 'Новый проект пустой. Вставьте фото (Ctrl+V) или выберите файл.');
+    return projectId;
+  }catch(err){
+    if(err.status === 409){
+      promptFeedbackRequired(err.message, {type:'createProject'});
+    } else {
+      setError(String(err.message || err));
+    }
+    busy = false;
+    throw err;
+  }
+}
+async function ensureProject(){
+  const id = qs().get('project');
+  if(id){
+    projectId = id;
+    document.getElementById('projectLabel').textContent = 'Проект ' + projectId;
+    const dealerLink = document.getElementById('dealerLink');
+    if(dealerLink) dealerLink.href = '/dealer?project=' + projectId;
+    document.getElementById('startBtn').disabled = false;
+    await refreshState();
+    syncProjectLabel((lastState && lastState.project_name) || '');
+    syncPhotoWarnVisibility();
+    return projectId;
+  }
+  return createProject();
+}
+async function refreshState(){
+  if(!projectId) return;
+  const data = await api(`/api/projects/${projectId}/studio/state`);
+  await applyStudioPayload(data);
+  // Don't dismiss an in-flight generation overlay here — applyStudioPayload holds it
+  // until the new final image is painted.
+  if(busy) return;
+  if(data.has_source && !data.has_final) setBusy(false, 'Фото есть. Можно запускать анализ → генерацию.');
+  if(!data.has_source) setBusy(false, 'Скопируйте фото и нажмите Ctrl+V — или выберите файл');
+}
+function fileFromClipboardItem(item){
+  if(!item) return null;
+  if(item.kind === 'file' && item.type && item.type.startsWith('image/')){
+    return item.getAsFile();
+  }
+  return null;
+}
+async function uploadSourceFile(file){
+  if(!file) return;
+  if(!String(file.type || '').startsWith('image/')){
+    setError('Нужно изображение (PNG/JPG/WebP), не файл другого типа');
+    return;
+  }
+  try{
+    if(!projectId) await ensureProject();
+    setBusy(true, 'Загрузка фото…');
+    const name = file.name || ('paste_' + Date.now() + '.png');
+    const fd = new FormData();
+    fd.append('file', file, name);
+    const data = await api(`/api/projects/${projectId}/source`, {method:'POST', body: fd});
+    const zone = document.getElementById('dropzone');
+    const img = document.getElementById('sourceImg');
+    img.src = URL.createObjectURL(file);
+    zone.classList.add('has-image');
+    if(data && (data.has_final !== undefined || data.history)){
+      await applyStudioPayload(data);
+    } else {
+      await refreshState();
+    }
+    updateVideoPanel(lastState);
+    setBusy(false, data.message || 'Новое фото загружено. Сделайте ночную концепцию заново, затем видео.');
+    document.getElementById('startBtn').disabled = false;
+    if(studioMode === 'video'){
+      setVideoStatus('Новое фото — сначала ночная концепция, потом видео (старая концепция сброшена)', false);
+    }
+  }catch(err){
+    setError(String(err.message || err));
+    busy = false;
+  }
+}
+const dropzone = document.getElementById('dropzone');
+const sourceFile = document.getElementById('sourceFile');
+let dropzoneLastTap = 0;
+function openSourceFilePicker(){
+  sourceFile.click();
+}
+document.getElementById('pickFileBtn').addEventListener('click', (e) => {
+  e.preventDefault();
+  openSourceFilePicker();
+});
+// File dialog only after two taps / double-click on the dropzone (not one).
+dropzone.addEventListener('click', (e) => {
+  const now = Date.now();
+  if(now - dropzoneLastTap < 450){
+    dropzoneLastTap = 0;
+    e.preventDefault();
+    openSourceFilePicker();
+    return;
+  }
+  dropzoneLastTap = now;
+});
+dropzone.addEventListener('dblclick', (e) => {
+  // Second click already opens via the timer above; block native dblclick side-effects.
+  e.preventDefault();
+});
+dropzone.addEventListener('keydown', (e) => {
+  if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openSourceFilePicker(); }
+});
+sourceFile.addEventListener('change', async (e) => {
+  const file = e.target.files && e.target.files[0];
+  if(file) await uploadSourceFile(file);
+  sourceFile.value = '';
+});
+;['dragenter','dragover'].forEach(ev => {
+  dropzone.addEventListener(ev, (e) => { e.preventDefault(); e.stopPropagation(); dropzone.classList.add('dragover'); });
+});
+;['dragleave','drop'].forEach(ev => {
+  dropzone.addEventListener(ev, (e) => { e.preventDefault(); e.stopPropagation(); dropzone.classList.remove('dragover'); });
+});
+dropzone.addEventListener('drop', async (e) => {
+  const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+  if(file) await uploadSourceFile(file);
+});
+async function setFinalFromFile(file){
+  if(!projectId || !file) return;
+  try{
+    setBusy(true, 'Устанавливаю скопированное фото как рабочее…');
+    const fd = new FormData();
+    fd.append('file', file, file.name || 'pasted_final.png');
+    fd.append('note', 'clipboard paste as working final');
+    await api(`/api/projects/${projectId}/studio/set-final`, {method:'POST', body: fd});
+    clearEditMarkup();
+    await refreshState();
+    setBusy(false, 'Рабочее фото обновлено. Можно размечать и править.');
+  }catch(err){
+    setError(String(err.message || err));
+    busy = false;
+  }
+}
+function pickClipboardImage(e){
+  const items = (e.clipboardData && e.clipboardData.items) ? Array.from(e.clipboardData.items) : [];
+  for(const item of items){
+    const file = fileFromClipboardItem(item);
+    if(file) return file;
+  }
+  if(e.clipboardData && e.clipboardData.files && e.clipboardData.files.length){
+    const f = e.clipboardData.files[0];
+    if(f && String(f.type || '').startsWith('image/')) return f;
+  }
+  return null;
+}
+window.addEventListener('paste', async (e) => {
+  if(studioMode === 'video') return; // video dropzone/handler owns paste in video mode
+  const tag = (e.target && e.target.tagName || '').toLowerCase();
+  if(tag === 'textarea' || tag === 'input') return;
+  const file = pickClipboardImage(e);
+  if(!file) return;
+  e.preventDefault();
+  // If a final already exists, paste becomes the new working render; otherwise source upload.
+  if(lastState && lastState.has_final){
+    await setFinalFromFile(file);
+  } else {
+    await uploadSourceFile(file);
+  }
+});
+dropzone.addEventListener('paste', async (e) => {
+  e.stopPropagation();
+  const file = pickClipboardImage(e);
+  if(!file) return;
+  e.preventDefault();
+  await uploadSourceFile(file);
+});
+function toggleTip(id){
+  document.querySelectorAll('.tip.open').forEach(el => {
+    if(el.id !== id) el.classList.remove('open');
+  });
+  const tip = document.getElementById(id);
+  if(tip) tip.classList.toggle('open');
+}
+document.addEventListener('click', (e) => {
+  const t = e.target;
+  if(t && (t.closest && t.closest('.tip'))) return;
+  document.querySelectorAll('.tip.open').forEach(el => el.classList.remove('open'));
+});
+function photoCheckStorageKey(){
+  return 'niteos_photo_check_ok_' + (projectId || 'none');
+}
+function hasPhotoCheckPassed(){
+  try{ return localStorage.getItem(photoCheckStorageKey()) === '1'; }catch(_){ return false; }
+}
+function markPhotoCheckPassed(){
+  try{ localStorage.setItem(photoCheckStorageKey(), '1'); }catch(_){}
+  const soft = document.getElementById('photoSoftWarn');
+  if(soft) soft.style.display = 'none';
+}
+function syncPhotoWarnVisibility(){
+  const soft = document.getElementById('photoSoftWarn');
+  if(!soft) return;
+  soft.style.display = hasPhotoCheckPassed() ? 'none' : '';
+}
+function openPhotoCheck(){
+  document.getElementById('photoCheckModal').classList.add('open');
+}
+function closePhotoCheck(){
+  document.getElementById('photoCheckModal').classList.remove('open');
+}
+function confirmPhotoCheckAndStart(){
+  markPhotoCheckPassed();
+  closePhotoCheck();
+  runStudioGeneration();
+}
+async function startStudio(){
+  if(!projectId || busy) return;
+  if(requireFeedbackBeforeAction({type:'generate'})) return;
+  if(!(lastState && lastState.has_source) && !document.getElementById('dropzone').classList.contains('has-image')){
+    setError('Сначала загрузите фото фасада');
+    return;
+  }
+  // Подсказка о качестве фото — один раз на проект.
+  if(hasPhotoCheckPassed()){
+    runStudioGeneration();
+    return;
+  }
+  openPhotoCheck();
+}
+async function runStudioGeneration(opts){
+  if(!projectId) return false;
+  if(!(opts && opts.skipBusyCheck) && busy) return false;
+  if(!(opts && opts.skipFeedbackGate) && requireFeedbackBeforeAction({type:'generate'})) return false;
+  try{
+    await assertRouteraiSpend('photo');
+    setBusy(true, (opts && opts.busyMessage) || 'Анализ фасада… подбор стиля… генерация…');
+    const fd = new FormData();
+    const model = await resolveStudioImageModel();
+    if(model) fd.append('routerai_model', model);
+    await api(`/api/projects/${projectId}/studio/start`, {method:'POST', body: fd});
+    clearEditMarkup();
+    // Overlay stays until refreshState paints the new final image.
+    await refreshState();
+    try{ await refreshRouteraiBalance(); }catch(_){}
+    return !!(lastState && lastState.has_final);
+  }catch(err){
+    if(err.status === 409){
+      setBusy(false);
+      promptFeedbackRequired(err.message, {type:'generate'});
+      if(opts && opts.rethrow) throw err;
+      return false;
+    }
+    setError(String(err.message || err));
+    if(opts && opts.rethrow) throw err;
+    return false;
+  }
+}
+async function startStudioLegacy(){
+  // kept for safety if anything still calls old name mid-generation
+  return runStudioGeneration();
+}
+async function sendChat(opts){
+  if(!projectId || busy) return;
+  if(!(opts && opts.skipFeedbackGate) && requireFeedbackBeforeAction({type:'chat'})) return;
+  const text = (document.getElementById('chatInput').value || '').trim();
+  const annotationBlob = await exportEditAnnotationBlob();
+  if(!text && !annotationBlob){
+    setError('Напишите, что хотите изменить');
+    highlightChatInstruction();
+    return;
+  }
+  if(annotationBlob && !text){
+    promptMarkupInstructionNeeded();
+    return;
+  }
+  try{
+    setBusy(true, annotationBlob ? 'Агент правит отмеченные светильники по вашему тексту…' : 'Агент правит результат…');
+    const fd = new FormData();
+    fd.append('message', text);
+    const model = await resolveStudioImageModel();
+    if(model) fd.append('routerai_model', model);
+    if(annotationBlob) fd.append('annotation_file', annotationBlob, 'edit_annotation.png');
+    await api(`/api/projects/${projectId}/studio/chat`, {method:'POST', body: fd});
+    document.getElementById('chatInput').value = '';
+    clearEditMarkup();
+    setBusy(true, 'Почти готово — загружаю обновлённый результат…');
+    // Overlay stays until the new result image is actually visible.
+    await refreshState();
+    if(!busy) setBusy(false, 'Правка применена — смотрите результат в центре');
+    try{
+      document.getElementById('resultCard')?.scrollIntoView({behavior:'smooth', block:'center'});
+    }catch(_){}
+  }catch(err){
+    if(err.status === 409){
+      setBusy(false);
+      promptFeedbackRequired(err.message, {type:'chat'});
+    } else {
+      setError(String(err.message || err));
+    }
+  }
+}
+function fillChatPrompt(text){
+  // Append into chat so brush + eraser presets can be combined; never auto-send.
+  const input = document.getElementById('chatInput');
+  if(!input) return;
+  const next = String(text || '').trim();
+  if(!next) return;
+  const cur = (input.value || '').trim();
+  input.value = cur ? (cur.replace(/\s+$/,'') + '\n' + next) : next;
+  const wrap = document.getElementById('chatSendTour');
+  if(wrap) wrap.classList.remove('needs-instruction');
+  try{ input.focus({preventScroll:true}); }catch(_){ try{ input.focus(); }catch(__){} }
+  const box = document.getElementById('statusBox');
+  if(box){
+    box.classList.remove('busy', 'err');
+    box.textContent = markupHasPaint()
+      ? 'Шаблон добавлен в чат. Можно дополнить текст и нажать «Отправить».'
+      : 'Текст добавлен в чат. Можно отправлять или дополнить.';
+  }
+  updateMarkupNextStep();
+}
+// Keep old name as alias without auto-send (in case cached HTML still calls it).
+function quickChat(text){
+  fillChatPrompt(text);
+}
+function setStudioMode(mode){
+  studioMode = (mode === 'video') ? 'video' : 'photo';
+  document.body.classList.toggle('mode-photo', studioMode === 'photo');
+  document.body.classList.toggle('mode-video', studioMode === 'video');
+  const photoTab = document.getElementById('modePhotoTab');
+  const videoTab = document.getElementById('modeVideoTab');
+  if(photoTab) photoTab.classList.toggle('active', studioMode === 'photo');
+  if(videoTab) videoTab.classList.toggle('active', studioMode === 'video');
+  const hint = document.getElementById('modeHint');
+  if(hint){
+    hint.textContent = studioMode === 'video'
+      ? 'Одна кнопка: ночная концепция → видео. Модель видео запоминается.'
+      : 'Загрузите фото → сгенерируйте ночную концепцию. Модель фото запоминается.';
+  }
+  if(studioMode === 'video'){
+    autoPickVideoScenario(lastState);
+    updateVideoPanel(lastState);
+  }
+  try{
+    if(studioMode === 'video') history.replaceState({}, '', location.pathname + location.search + '#video');
+    else history.replaceState({}, '', location.pathname + location.search);
+  }catch(_){}
+}
+function autoPickVideoScenario(data){
+  const d = data || lastState || {};
+  const hasClip = !!(d.has_source_clip || d.clip_url);
+  const hasSource = !!d.has_source;
+  const hasFinal = !!d.has_final;
+  // Главный путь — как на фото: наша вечерняя концепция, потом облёт.
+  if(hasSource || hasFinal){
+    videoScenario = 'from_photo';
+  } else if(hasClip){
+    videoScenario = 'from_clip_relight';
+  } else {
+    videoScenario = 'from_photo';
+  }
+  return videoScenario;
+}
+function pickVideoScenario(scenario){
+  videoScenario = scenario || 'from_photo';
+  updateVideoPanel(lastState);
+}
+function setVideoStatus(msg, isErr){
+  const box = document.getElementById('videoStatusBox');
+  if(!box) return;
+  box.textContent = msg || '';
+  box.classList.toggle('err', !!isErr);
+  box.classList.toggle('busy', !isErr && /…|минут|загруз/i.test(msg || ''));
+}
+function updateVideoPanel(data){
+  const d = data || lastState || {};
+  autoPickVideoScenario(d);
+  const runBtn = document.getElementById('videoRunBtn');
+  const makeVidBtn = document.getElementById('makeVideoFromPhotoBtn');
+  const pickMedia = document.getElementById('videoPickMediaBtn');
+  const clipName = document.getElementById('videoClipName');
+  const video = document.getElementById('resultVideo');
+  const empty = document.getElementById('videoEmptyHint');
+  const dlRow = document.getElementById('videoDownloadRow');
+  const dl = document.getElementById('videoDownloadLink');
+  const hasClip = !!(d.has_source_clip || d.clip_url);
+  const canStart = !!projectId && !busy && (!!d.has_source || !!d.has_final || (videoScenario === 'from_clip_relight' && hasClip));
+  let status = '';
+  if(videoScenario === 'from_photo'){
+    if(d.video_url){
+      status = 'Видео готово — смотрите превью справа';
+    } else if(d.last_video_error){
+      status = String(d.last_video_error);
+    } else if(d.has_final){
+      status = 'Ночной кадр готов (это фото в истории). Видео ещё нет — нажмите «Сделать видео», шаг 2 соберёт ролик.';
+    } else if(d.has_source){
+      status = 'Фото есть — одна кнопка: ночная концепция → видео';
+    } else {
+      status = 'Добавьте дневное фото фасада';
+    }
+  } else {
+    status = hasClip
+      ? 'Клип загружен — «Сделать видео» подсветит его автоматически'
+      : 'Добавьте фото фасада (предпочтительно) или клип';
+  }
+  if(runBtn){
+    runBtn.disabled = !canStart;
+    runBtn.textContent = 'Сделать видео';
+  }
+  if(makeVidBtn) makeVidBtn.disabled = !canStart || (!d.has_final && !d.has_source);
+  if(pickMedia) pickMedia.disabled = !projectId || busy;
+  if(clipName){
+    if(hasClip && videoScenario !== 'from_photo') clipName.textContent = 'Клип загружен';
+    else if(d.has_final) clipName.textContent = 'Ночная концепция готова';
+    else if(d.has_source) clipName.textContent = 'Дневное фото загружено';
+    else clipName.textContent = '';
+  }
+  if(!busy) setVideoStatus(status, !!(d.last_video_error && !d.video_url));
+  if(empty && !d.video_url){
+    if(d.last_video_error){
+      empty.style.display = 'block';
+      empty.innerHTML = '<div style="color:#e89a9a;font-weight:700;margin:0 0 8px">Видео не собралось</div><div style="text-align:left;max-width:420px;margin:0 auto">' + esc(String(d.last_video_error)) + '</div>';
+    } else if(d.has_final){
+      empty.style.display = 'block';
+      empty.textContent = 'Ночной кадр уже есть (миниатюра в истории). Здесь появится ВИДЕО после шага 2 — нажмите «Сделать видео».';
+    } else {
+      empty.style.display = (document.getElementById('videoStage')?.classList.contains('waiting-video') ? 'none' : 'block');
+      if(!document.getElementById('videoStage')?.classList.contains('waiting-video')){
+        empty.textContent = 'Здесь появится готовое видео';
+      }
+    }
+  }
+  if(video && dlRow && dl){
+    if(d.video_url){
+      showVideoResult(d.video_url);
+    } else {
+      video.removeAttribute('src');
+      video.style.display = 'none';
+      dlRow.style.display = 'none';
+    }
+  }
+}
+function goMakeNightConcept(){
+  setStudioMode('photo');
+  const box = document.getElementById('statusBox');
+  if(lastState && lastState.has_source){
+    if(box){
+      box.classList.remove('err');
+      box.textContent = 'Или вернитесь во вкладку «Видео» и нажмите «Сделать видео» — концепция и ролик пойдут сами.';
+    }
+    try{ document.getElementById('startBtn')?.focus({preventScroll:true}); }catch(_){}
+  } else if(box){
+    box.classList.add('err');
+    box.textContent = 'Сначала загрузите дневное фото фасада (Ctrl+V или файл).';
+  }
+}
+async function runVideoOneClick(){ setError('В этом пакете только фото — видео отключено'); return; 
+  if(!projectId || busy) return;
+  autoPickVideoScenario(lastState);
+  if(videoScenario === 'from_clip_relight'){
+    if(!(lastState && (lastState.has_source_clip || lastState.clip_url))){
+      setVideoStatus('Сначала загрузите файл', true);
+      return;
+    }
+    await runSelectedVideo();
+    return;
+  }
+  // Главный путь: концепция (если нет) → видео. Одна кнопка.
+  if(!(lastState && (lastState.has_source || lastState.has_final))){
+    setVideoStatus('Сначала загрузите дневное фото фасада', true);
+    return;
+  }
+  await runPhotoThenVideo();
+}
+async function runPhotoThenVideoOrGo(){
+  await runVideoOneClick();
+}
+async function makeVideoFromNightConcept(){
+  await runVideoOneClick();
+}
+async function runPhotoThenVideo(){
+  // Одна кнопка во вкладке «Видео»: день → ночная концепция → ролик.
+  if(!projectId || busy) return;
+  try{
+    // Если концепция уже есть — только видео-холд; иначе и фото-запас, и видео.
+    if(!(lastState && lastState.has_final)) await assertRouteraiSpend('photo');
+    await assertRouteraiSpend('video');
+  }catch(err){
+    setVideoStatus(String(err.message || err), true);
+    setError(String(err.message || err));
+    return;
+  }
+  // Не уходим на вкладку «Фото» — концепция делается в фоне, UI остаётся на Видео.
+  if(!projectId || busy) return;
+  if(requireFeedbackBeforeAction({type:'generate'})) return;
+  videoPipelineActive = true;
+  setStudioMode('video');
+  try{
+    if(!(lastState && lastState.has_final)){
+      if(!(lastState && lastState.has_source)){
+        setVideoStatus('Сначала загрузите дневное фото', true);
+        return;
+      }
+      setVideoPipelineStep(1);
+      setBusy(true, 'Шаг 1 из 2: ночная концепция с архитектурной подсветкой…');
+      setVideoStatus('Шаг 1 из 2: ночной кадр с подсветкой…', false);
+      let ok = false;
+      try{
+        ok = await runStudioGeneration({
+          skipFeedbackGate: true,
+          skipBusyCheck: true,
+          rethrow: true,
+          busyMessage: 'Шаг 1 из 2: ночная концепция с архитектурной подсветкой…',
+        });
+      }catch(err){
+        if(err && err.status === 409) return;
+        setVideoPipelineStep(0);
+        setVideoStatus(String(err.message || err || 'Концепция не собралась'), true);
+        return;
+      }
+      if(!ok) await refreshState();
+      if(!(lastState && lastState.has_final)){
+        setVideoPipelineStep(0);
+        setError('Ночная концепция не собралась — видео не запускаю. Попробуйте ещё раз.');
+        setVideoStatus('Концепция не собралась — нажмите «Сделать видео» ещё раз', true);
+        return;
+      }
+    }
+    pickVideoScenario('from_photo');
+    setStudioMode('video');
+    setVideoPipelineStep(2);
+    // Important: clear busy so stage-2 can start (runSelectedVideo checks busy).
+    busy = false;
+    setVideoStatus('Шаг 2 из 2: собираем видео… Ролик появится здесь.', false);
+    await runSelectedVideo({skipBusyCheck: true, fromPipeline: true});
+  }finally{
+    videoPipelineActive = false;
+    if(!(lastState && lastState.video_url)) setVideoPipelineStep(0);
+    updateVideoPanel(lastState);
+  }
+}
+async function runSelectedVideo(opts){
+  if(!projectId) return;
+  if(!(opts && opts.skipBusyCheck) && busy) return;
+  if(requireFeedbackBeforeAction({type:'generate'})) return;
+  if(videoScenario === 'from_photo' || videoScenario === 'before_after'){
+    if(!(lastState && lastState.has_final)){
+      setVideoStatus('Нужна ночная концепция — иначе в видео не будет нашей подсветки', true);
+      return;
+    }
+  }
+  if(videoScenario !== 'from_photo' && !(lastState && (lastState.has_source_clip || lastState.clip_url))){
+    setVideoStatus('Сначала загрузите клип', true);
+    return;
+  }
+  const labels = {
+    from_photo: 'Шаг 2 из 2: видео из ночной концепции… Камера едет, свет не пересобираем.',
+    from_clip_relight: 'Подсветка клипа моделью…',
+    before_after: 'Склейка: клип + концепция «после»…',
+  };
+  try{
+    if(!(opts && opts.fromPipeline)) await assertRouteraiSpend('video');
+    if(opts && opts.fromPipeline) setVideoPipelineStep(2);
+    setBusy(true, labels[videoScenario] || 'Генерация видео…');
+    setVideoStatus(labels[videoScenario] || 'Генерация…', false);
+    const fd = new FormData();
+    fd.append('mode', videoScenario);
+    fd.append('duration_sec', String(getVideoDurationSec()));
+    const modelSel = document.getElementById('videoModelSelect');
+    if(modelSel && modelSel.value) fd.append('routerai_model', modelSel.value);
+    const data = await api(`/api/projects/${projectId}/video/generate`, {method:'POST', body: fd});
+    const resultUrl = data.result_url || '';
+    lastState = Object.assign({}, lastState, {
+      has_video: true,
+      video_url: resultUrl || lastState.video_url,
+      history: data.history || lastState.history,
+      feedback_required: true,
+      active_history_id: data.active_history_id || data.history_id,
+    });
+    if(resultUrl) showVideoResult(resultUrl);
+    else updateVideoPanel(lastState);
+    try{ await refreshState(); }catch(_){}
+    if(lastState && lastState.video_url) showVideoResult(lastState.video_url);
+    try{ await refreshRouteraiBalance(); }catch(_){}
+    setBusy(false, 'Видео готово — смотрите превью справа / по центру');
+    setVideoStatus('Видео готово — можно смотреть и скачать', false);
+    setVideoPipelineStep(3);
+    scheduleFeedbackPrompt(lastState);
+  }catch(err){
+    setVideoPipelineStep(0);
+    if(err.status === 409){
+      promptFeedbackRequired(err.message, {type:'generate', resume:() => runSelectedVideo()});
+      busy = false;
+      updateVideoPanel(lastState);
+      return;
+    }
+    setError(humanizeVideoClientError(String(err.message || err)));
+    setVideoStatus(humanizeVideoClientError(String(err.message || err)), true);
+    busy = false;
+    lastState = Object.assign({}, lastState, { last_video_error: humanizeVideoClientError(String(err.message || err)) });
+    updateVideoPanel(lastState);
+  }
+}
+function humanizeVideoClientError(msg){
+  const t = String(msg || '');
+  const low = t.toLowerCase();
+  if(low.includes('insufficient balance') || low.includes('402') || low.includes('available balance')){
+    return 'RouterAI отказал по балансу (их API). Пополните баланс и снова «Сделать видео».';
+  }
+  return t;
+}
+function showVideoMediaPreview(file){
+  const img = document.getElementById('videoSourceImg');
+  const vid = document.getElementById('videoSourcePreview');
+  const zone = document.getElementById('videoDropzone');
+  if(!file) return;
+  const url = URL.createObjectURL(file);
+  if((file.type || '').startsWith('video/')){
+    if(img){ img.style.display = 'none'; img.removeAttribute('src'); }
+    if(vid){ vid.src = url; vid.style.display = 'block'; }
+  } else {
+    if(vid){ vid.style.display = 'none'; vid.removeAttribute('src'); }
+    if(img){ img.src = url; img.style.display = 'block'; }
+  }
+  if(zone) zone.classList.add('has-image');
+}
+async function ingestVideoMediaFile(file){
+  if(!file) return;
+  const isVideo = (file.type || '').startsWith('video/') || /\.(mp4|mov|webm|mkv)$/i.test(file.name || '');
+  showVideoMediaPreview(file);
+  if(!projectId) await ensureProject();
+  if(isVideo){
+    if(videoScenario === 'from_photo') pickVideoScenario('from_clip_relight');
+    setBusy(true, 'Загружаю клип…');
+    setVideoStatus('Загружаю клип…', false);
+    const fd = new FormData();
+    fd.append('clip', file, file.name || 'clip.mp4');
+    const data = await api(`/api/projects/${projectId}/video/upload-clip`, {method:'POST', body: fd});
+    lastState = Object.assign({}, lastState, {
+      has_source_clip: true,
+      clip_url: data.clip_url || '',
+    });
+    updateVideoPanel(lastState);
+    setBusy(false, data.message || 'Клип загружен');
+    setVideoStatus(data.message || 'Клип загружен', false);
+    return;
+  }
+  // Image → same as photo source upload (also invalidates old concept/video on server)
+  pickVideoScenario('from_photo');
+  setBusy(true, 'Загружаю фото…');
+  setVideoStatus('Загружаю фото…', false);
+  const fd = new FormData();
+  fd.append('file', file, file.name || 'facade.jpg');
+  const data = await api(`/api/projects/${projectId}/source`, {method:'POST', body: fd});
+  if(data && (data.has_final !== undefined || data.history)){
+    await applyStudioPayload(data);
+  } else {
+    await refreshState();
+  }
+  updateVideoPanel(lastState);
+  const msg = data.message || 'Фото загружено — нажмите «Сделать видео» (концепция → ролик одной кнопкой).';
+  setBusy(false, msg);
+  setVideoStatus(msg, false);
+}
+async function uploadVideoClip(ev){
+  const file = ev && ev.target && ev.target.files && ev.target.files[0];
+  try{
+    if(file) await ingestVideoMediaFile(file);
+  }catch(err){
+    setError(String(err.message || err));
+    setVideoStatus(String(err.message || err), true);
+    busy = false;
+    updateVideoPanel(lastState);
+  }finally{
+    try{ if(ev && ev.target) ev.target.value = ''; }catch(_){}
+  }
+}
+(function bindVideoMediaDropzone(){
+  const zone = document.getElementById('videoDropzone');
+  const input = document.getElementById('videoMediaInput');
+  const pick = document.getElementById('videoPickMediaBtn');
+  if(!zone || !input) return;
+  if(pick) pick.addEventListener('click', () => input.click());
+  zone.addEventListener('click', () => input.click());
+  zone.addEventListener('keydown', (e) => {
+    if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); input.click(); }
+  });
+  input.addEventListener('change', uploadVideoClip);
+  zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('drag'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag'));
+  zone.addEventListener('drop', async (e) => {
+    e.preventDefault();
+    zone.classList.remove('drag');
+    const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if(!file) return;
+    try{ await ingestVideoMediaFile(file); }
+    catch(err){
+      setError(String(err.message || err));
+      setVideoStatus(String(err.message || err), true);
+      busy = false;
+    }
+  });
+  const onPaste = async (e) => {
+    if(studioMode !== 'video') return;
+    const items = e.clipboardData && e.clipboardData.items;
+    if(!items) return;
+    for(const it of items){
+      if(it.kind !== 'file') continue;
+      const file = it.getAsFile();
+      if(!file) continue;
+      e.preventDefault();
+      try{ await ingestVideoMediaFile(file); }catch(err){
+        setError(String(err.message || err));
+        setVideoStatus(String(err.message || err), true);
+        busy = false;
+      }
+      break;
+    }
+  };
+  zone.addEventListener('paste', onPaste);
+  window.addEventListener('paste', onPaste);
+})();
+function downloadFinal(){
+  if(!projectId) return;
+  (async () => {
+    try{
+      const url = `/api/projects/${projectId}/file/output/final_imported_render.png?t=${Date.now()}`;
+      const res = await fetch(url, {credentials:'same-origin'});
+      if(!res.ok) throw new Error('Не удалось получить файл');
+      const blob = await res.blob();
+      const stamp = new Date().toISOString().slice(0,10).replace(/-/g,'');
+      const name = `niteos_концепция_${projectId.slice(0,8)}_${stamp}.png`;
+      const href = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = href;
+      a.download = name;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(href);
+      setBusy(false, 'Скачано: ' + name);
+    }catch(err){
+      setError('Скачивание не удалось: ' + String(err.message || err));
+    }
+  })();
+}
+async function blobToPng(blob){
+  if(blob && blob.type === 'image/png') return blob;
+  const bmp = await createImageBitmap(blob);
+  const canvas = document.createElement('canvas');
+  canvas.width = bmp.width;
+  canvas.height = bmp.height;
+  canvas.getContext('2d').drawImage(bmp, 0, 0);
+  return await new Promise((resolve, reject) => {
+    canvas.toBlob((b) => b ? resolve(b) : reject(new Error('PNG convert failed')), 'image/png');
+  });
+}
+async function copyFinal(){
+  if(!projectId) return;
+  const finalImg = document.getElementById('finalImg');
+  const url = (finalImg && finalImg.getAttribute('src'))
+    || `/api/projects/${projectId}/file/output/final_imported_render.png?t=${Date.now()}`;
+  try{
+    const res = await fetch(url, {credentials:'same-origin'});
+    if(!res.ok) throw new Error('Не удалось загрузить изображение');
+    const raw = await res.blob();
+    const png = await blobToPng(raw);
+    if(navigator.clipboard && window.ClipboardItem){
+      try{
+        await navigator.clipboard.write([
+          new ClipboardItem({ 'image/png': png })
+        ]);
+        setBusy(false, 'Фото скопировано в буфер обмена. Вставьте через Ctrl+V.');
+        return;
+      }catch(clipErr){
+        // HTTP / insecure context often blocks clipboard.write for images.
+      }
+    }
+    const href = URL.createObjectURL(png);
+    const a = document.createElement('a');
+    a.href = href;
+    a.download = `niteos_концепция_${projectId.slice(0,8)}_${Date.now()}.png`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(href);
+    setBusy(false, 'Буфер недоступен в этом браузере/по HTTP. Файл скачан — откройте и Ctrl+C.');
+  }catch(err){
+    setError('Копирование не удалось: ' + String(err.message || err));
+  }
+}
+bindMarkupCanvas();
+(function bindChatInstructionWatch(){
+  const input = document.getElementById('chatInput');
+  if(!input) return;
+  const sync = () => updateMarkupNextStep();
+  input.addEventListener('input', sync);
+  input.addEventListener('change', sync);
+})();
+ensureProject().then(async () => {
+  syncPhotoWarnVisibility();
+  maybeShowWelcomeTour();
+  await loadStudioModels();
+  const modeQ = (new URLSearchParams(location.search).get('mode') || '').toLowerCase();
+  if(modeQ === 'video' || location.hash === '#video' || location.hash === '#videoPanel'){
+    setStudioMode('video');
+  } else {
+    setStudioMode('photo');
+  }
+}).catch(err => setError(String(err.message || err)));
+</script>
+</body>
+</html>
+"""
