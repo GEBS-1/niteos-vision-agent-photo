@@ -38,9 +38,6 @@ AGENT_STUDIO_HTML = r"""
     .sales-hint{max-width:min(380px,56vw);font-size:12px;line-height:1.4;color:var(--muted);text-align:right}
     .sales-hint a{color:var(--accent);font-weight:700;text-decoration:none;white-space:nowrap}
     .sales-hint a:hover{text-decoration:underline}
-    .mode-tabs{display:flex;gap:6px;padding:10px 14px 0;margin:0;align-items:center;flex-wrap:wrap;border-bottom:1px solid var(--line);background:var(--header);padding-bottom:10px}
-    .mode-tab{border:1px solid var(--line);background:var(--surface-2);color:var(--muted);border-radius:999px;padding:8px 16px;font:inherit;font-weight:700;cursor:pointer}
-    .mode-tab.active{background:var(--accent);color:#1a1000;border-color:transparent}
     .mode-hint{font-size:12px;color:var(--muted);margin-left:6px}
     .scenario-list{display:grid;gap:10px}
     .scenario{border:1px solid var(--line);border-radius:12px;padding:14px;background:var(--surface);cursor:pointer;text-align:left;color:inherit;font:inherit;width:100%}
@@ -48,23 +45,10 @@ AGENT_STUDIO_HTML = r"""
     .scenario.active{border-color:var(--accent);box-shadow:0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent)}
     .scenario b{display:block;margin:0 0 4px;font-size:14px;color:var(--text)}
     .scenario span{display:block;font-size:12px;color:var(--muted);line-height:1.4}
-    .video-stage video{width:100%;max-height:420px;border-radius:10px;background:var(--stage);border:1px solid var(--line)}
     .layout{display:grid;grid-template-columns:minmax(220px,.9fr) minmax(340px,1.45fr) minmax(300px,1.05fr);gap:14px;padding:14px;min-height:calc(100vh - 64px)}
-    body.mode-video .layout{grid-template-columns:minmax(280px,1fr) minmax(360px,1.3fr)}
-    body.mode-video .chat-col{display:none!important}
-    body.mode-photo .video-only{display:none!important}
-    body.mode-video .photo-only{display:none!important}
     .model-row{display:flex;flex-direction:column;gap:4px;margin-top:4px}
     .model-row label{font-size:12px;color:var(--muted);font-weight:600}
     .model-row select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--text);font:inherit}
-    .duration-row{display:flex;flex-direction:column;gap:8px;margin-top:10px}
-    .duration-row .duration-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
-    .duration-row .duration-top label{font-size:12px;color:var(--muted);font-weight:600}
-    .duration-row .duration-val{font-size:14px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums}
-    .duration-row input[type=range]{
-      width:100%;margin:0;accent-color:#e88a12;height:28px;cursor:pointer;
-    }
-    .duration-row .duration-ends{display:flex;justify-content:space-between;font-size:11px;color:var(--muted)}
     .support-icon-btn{
       height:42px;min-width:42px;border-radius:999px;border:1px solid var(--line);background:var(--surface-2);color:var(--text);
       display:inline-flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;font:inherit;font-weight:800;font-size:13px;
@@ -195,7 +179,6 @@ AGENT_STUDIO_HTML = r"""
     .result-stage canvas{position:absolute;left:0;top:0;touch-action:none;cursor:crosshair;z-index:2;pointer-events:none}
     .result-stage.is-editing canvas.tool-on{pointer-events:auto}
     .result-stage.is-editing{outline:2px solid #5a8fd4;outline-offset:1px}
-    .video-panel{display:none}
     .markup-bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
     .markup-bar .btn.active{outline:2px solid var(--accent);outline-offset:1px}
     .markup-bar .btn.active.brush{outline-color:#ff6b6b}
@@ -289,14 +272,6 @@ AGENT_STUDIO_HTML = r"""
     .busy-step{font-size:11px;font-weight:700;letter-spacing:.03em;padding:5px 10px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
     .busy-step.on{border-color:var(--accent);color:#ffe6a8;background:#2a2418}
     .busy-step.done{border-color:#3d5a3d;color:#8fd48f}
-    .video-progress{display:none;margin:0 0 10px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--surface);font-size:13px;line-height:1.45}
-    .video-progress.open{display:block}
-    .video-progress b{color:var(--accent)}
-    .video-stage{position:relative}
-    .video-stage .video-still-preview{display:none;width:100%;max-height:420px;object-fit:contain;border-radius:10px;background:var(--stage);border:1px solid var(--line)}
-    .video-stage.waiting-video .video-still-preview{display:block}
-    .video-stage.waiting-video #resultVideo{display:none!important}
-    .video-stage.waiting-video #videoEmptyHint{display:none!important}
     @keyframes niteosSpin{to{transform:rotate(360deg)}}
     .card-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
     .tip{position:relative;display:inline-flex;align-items:center;vertical-align:middle}
@@ -338,10 +313,9 @@ AGENT_STUDIO_HTML = r"""
     .zone-intent-actions .btn{flex:1 1 120px}
   
     /* PHOTO-ONLY HANDOFF */
-    .mode-tabs,.video-only,#modeVideoTab,#makeVideoFromPhotoBtn,#videoSourceCard{display:none!important}
-    body.mode-video{ /* force stay photo */ }
 
-  </style>
+      .video-only,.mode-tabs{display:none!important}
+</style>
 </head>
 <body class="mode-photo">
 {{MAX_GROUP_WIDGET}}
@@ -350,7 +324,6 @@ AGENT_STUDIO_HTML = r"""
     <div class="busy-spinner" aria-hidden="true"></div>
     <div class="busy-steps" id="busySteps" aria-hidden="true">
       <span class="busy-step" id="busyStep1">1 · Ночь + свет</span>
-      <span class="busy-step" id="busyStep2">2 · Видео</span>
     </div>
     <h3 id="busyTitle">Идёт генерация</h3>
     <p id="busyText">Подождите, агент обрабатывает запрос…</p>
@@ -408,11 +381,6 @@ AGENT_STUDIO_HTML = r"""
     <button class="btn secondary" id="newProjectTour" onclick="createProject()">Новый проект</button>
   </div>
 </header>
-<div class="mode-tabs" role="tablist" aria-label="Режим студии">
-  <button type="button" class="mode-tab active" id="modePhotoTab" onclick="setStudioMode('photo')">Фото</button>
-  <button type="button" class="mode-tab" id="modeVideoTab" onclick="setStudioMode('video')">Видео</button>
-  <span class="mode-hint" id="modeHint">Загрузите фото фасада → получите ночную концепцию → правки в этом окне</span>
-</div>
 
 <div class="tour-backdrop" id="studioTour" role="dialog" aria-label="Обучение AI-студии" style="display:none">
   <!-- Legacy modal kept unused; interactive coach tour is primary -->
@@ -486,7 +454,7 @@ AGENT_STUDIO_HTML = r"""
 <div class="support-modal" id="myProjectsModal" role="dialog" aria-modal="true" aria-labelledby="myProjectsTitle">
   <div class="my-projects-card">
     <h3 id="myProjectsTitle">Мои проекты</h3>
-    <p class="lead">Фото и видео по проектам. Откройте любой — внутри будет история версий с оценками.</p>
+    <p class="lead">Фото-проекты. Откройте любой — внутри будет история версий с оценками.</p>
     <div class="my-proj-rename">
       <input id="projectRenameInput" type="text" maxlength="80" placeholder="Имя текущего проекта" aria-label="Имя проекта">
       <button type="button" class="btn secondary" onclick="renameCurrentProject()">Сохранить имя</button>
@@ -538,70 +506,20 @@ AGENT_STUDIO_HTML = r"""
     <div class="warn-note" id="photoSoftWarn">Уберите чужие надписи/водяные знаки с фото — так результат чище.</div>
   </section>
 
-  <section class="card video-only" id="videoSourceCard">
-    <div class="card-head"><h2>1. Фото фасада</h2></div>
-    <p class="muted" style="margin:0;font-size:13px;line-height:1.45">Загрузите дневное фото — дальше одна кнопка сделает ночную концепцию и видео по ней.</p>
-    <div class="dropzone" id="videoDropzone" tabindex="0" role="button" aria-label="Вставить или загрузить фото">
-      <div class="hint" id="videoDropHint">
-        <strong>Вставьте фото фасада</strong><br>
-        Ctrl+V · перетащить · или «Выбрать файл»
-      </div>
-      <img class="preview" id="videoSourceImg" alt="media preview" style="display:none">
-      <video id="videoSourcePreview" muted playsinline style="display:none;width:100%;max-height:220px;border-radius:10px;background:#000"></video>
-    </div>
-    <input type="file" id="videoMediaInput" class="hidden" accept="image/*,video/mp4,video/quicktime,video/webm,video/*">
-    <div class="drop-actions">
-      <button type="button" class="btn secondary" id="videoPickMediaBtn" title="Выбрать фото или видео">Выбрать файл</button>
-    </div>
-    <div class="clip-name muted" id="videoClipName" style="font-size:12px"></div>
-
-    <div class="card-head" style="margin-top:6px"><h2>2. Модель и запуск</h2></div>
-    <p class="muted" style="margin:0;font-size:12px;line-height:1.45">
-      Модель и длительность запоминаются. Seedance собирает ролик на выбранную длину (5–15 сек).
-    </p>
-    <div class="model-row">
-      <label for="videoModelSelect">Модель видео</label>
-      <select id="videoModelSelect" aria-label="Модель генерации видео"></select>
-    </div>
-    <div class="duration-row">
-      <div class="duration-top">
-        <label for="videoDurationRange">Длительность</label>
-        <span class="duration-val" id="videoDurationLabel">8 сек</span>
-      </div>
-      <input type="range" id="videoDurationRange" min="5" max="15" step="1" value="8" aria-label="Длительность ролика в секундах">
-      <div class="duration-ends"><span>5 сек</span><span>15 сек</span></div>
-    </div>
-    <div class="row" style="margin-top:8px;flex-wrap:wrap;gap:8px">
-      <button type="button" class="btn accent" id="videoRunBtn" onclick="runVideoOneClick()" disabled>Сделать видео</button>
-    </div>
-    <div class="status" id="videoStatusBox">Добавьте фото → нажмите «Сделать видео»</div>
-  </section>
-
+  
   <section class="card work-col" id="resultCard">
     <div class="col-kicker work photo-only">Результат · правки</div>
-    <div class="col-kicker work video-only">Результат · видео</div>
-    <div class="card-head photo-only">
+        <div class="card-head photo-only">
       <h2>2. Результат</h2>
       <span class="tip" id="tipResult">
         <button type="button" class="tip-btn" onclick="toggleTip('tipResult')" aria-label="Подсказка">?</button>
         <span class="tip-bubble right">Ночной рендер. Правки — текстом в чате или кистью по зоне.</span>
       </span>
     </div>
-    <div class="card-head video-only">
-      <h2>Превью ролика</h2>
-    </div>
-    <div class="video-progress video-only" id="videoProgressBox" aria-live="polite"></div>
-    <div class="result-stage photo-only" id="resultStage">
+            <div class="result-stage photo-only" id="resultStage">
       <img id="finalImg" alt="final">
       <canvas id="editMarkupCanvas" class="hidden" tabindex="0" aria-hidden="true"></canvas>
     </div>
-    <div class="video-stage video-only" id="videoStage">
-      <img class="video-still-preview" id="videoStillPreview" alt="Ночная концепция — ждём видео">
-      <video id="resultVideo" controls playsinline style="display:none;width:100%"></video>
-      <div class="muted" id="videoEmptyHint" style="padding:24px;text-align:center">Здесь появится готовое видео</div>
-      <div class="row" id="videoDownloadRow" style="display:none;margin-top:8px">
-        <a class="btn secondary" id="videoDownloadLink" href="#" download>Скачать видео</a>
-      </div>
     </div>
     <div class="markup-bar photo-only" id="markupBarTour">
       <button type="button" class="btn secondary brush" id="editBrushBtn" onclick="toggleEditTool('brush')" title="Красная кисть: изменить или проставить свет">Кисть · правка</button>
@@ -626,8 +544,7 @@ AGENT_STUDIO_HTML = r"""
     <div class="row photo-only">
       <button class="btn secondary" onclick="downloadFinal()" id="downloadBtn" disabled title="Скачать текущий результат">Скачать</button>
       <button class="btn secondary" onclick="copyFinal()" id="copyFinalBtn" disabled title="Скопировать результат в буфер">Копировать</button>
-      <button class="btn accent" onclick="runVideoOneClick()" id="makeVideoFromPhotoBtn" disabled title="Ночная концепция → видео одной кнопкой">Сделать видео</button>
-    </div>
+          </div>
     <div class="card-head" style="margin-top:4px">
       <div class="muted">История версий · оценки</div>
     </div>
@@ -709,9 +626,7 @@ AGENT_STUDIO_HTML = r"""
 <script>
 let projectId = '';
 let busy = false;
-let videoPipelineActive = false;
 let studioMode = 'photo';
-let videoScenario = 'from_photo';
 let lastState = {};
 function syncThemeToggleLabel(){
   const btn = document.getElementById('themeToggleBtn');
@@ -728,19 +643,7 @@ function toggleNiteosTheme(){
 }
 syncThemeToggleLabel();
 let studioMaxUser = null;
-async function refreshStudioMaxUser(){
-  try{
-    const me = await api('/api/auth/me');
-    if(me && me.ok && me.user){
-      studioMaxUser = me.user;
-      const line = document.getElementById('supportUserLine');
-      if(line){
-        const name = [me.user.first_name, me.user.last_name].filter(Boolean).join(' ') || ('ID ' + (me.user.max_user_id || ''));
-        line.textContent = 'Вы: ' + name + ' · напишите нам, и оставьте телефон ниже — мы сможем ответить.';
-      }
-    }
-  }catch(_){}
-}
+
 function openSupportModal(){
   const modal = document.getElementById('supportModal');
   if(!modal) return;
@@ -835,7 +738,7 @@ const STUDIO_TOUR = [
     target: 'resultCard',
     place: 'below',
     action: 'result',
-    html: '<div class="tour-action-chip">▶ Результат</div><p>Ночной рендер здесь. Правки — чат или кисть. Видео — отдельная вкладка сверху.</p>'
+    html: '<div class="tour-action-chip">▶ Результат</div><p>Ночной рендер здесь. Правки — чат или кисть.</p>'
   },
   {
     title: 'Действие: кисть и ластик',
@@ -1240,75 +1143,8 @@ async function api(path, opts={}){
   }
   return data;
 }
-function setVideoPipelineStep(step){
-  // step: 0 idle, 1 night concept, 2 video, 3 done
-  const steps = document.getElementById('busySteps');
-  const s1 = document.getElementById('busyStep1');
-  const s2 = document.getElementById('busyStep2');
-  const prog = document.getElementById('videoProgressBox');
-  const stage = document.getElementById('videoStage');
-  const still = document.getElementById('videoStillPreview');
-  if(steps){
-    steps.style.display = step > 0 && step < 3 ? 'flex' : 'none';
-    steps.setAttribute('aria-hidden', step > 0 && step < 3 ? 'false' : 'true');
-  }
-  if(s1){
-    s1.classList.toggle('on', step === 1);
-    s1.classList.toggle('done', step >= 2);
-  }
-  if(s2){
-    s2.classList.toggle('on', step === 2);
-    s2.classList.toggle('done', step >= 3);
-  }
-  if(prog){
-    if(step === 1){
-      prog.classList.add('open');
-      prog.innerHTML = '<b>Шаг 1 из 2</b> — ночной кадр с архитектурной подсветкой…';
-    } else if(step === 2){
-      prog.classList.add('open');
-      prog.innerHTML = '<b>Шаг 2 из 2</b> — собираем видео из ночного кадра. Ролик появится здесь.';
-    } else if(step === 3){
-      prog.classList.add('open');
-      prog.innerHTML = '<b>Готово</b> — видео ниже. Можно смотреть и скачать.';
-    } else {
-      prog.classList.remove('open');
-      prog.innerHTML = '';
-    }
-  }
-  if(stage){
-    const waiting = step === 1 || step === 2;
-    stage.classList.toggle('waiting-video', waiting && !(lastState && lastState.video_url));
-  }
-  if(still && lastState && lastState.final_url && (step === 1 || step === 2)){
-    still.src = lastState.final_url + (lastState.final_url.includes('?') ? '&' : '?') + 't=' + Date.now();
-  }
-}
-function showVideoResult(url){
-  const video = document.getElementById('resultVideo');
-  const empty = document.getElementById('videoEmptyHint');
-  const dlRow = document.getElementById('videoDownloadRow');
-  const dl = document.getElementById('videoDownloadLink');
-  const stage = document.getElementById('videoStage');
-  if(stage) stage.classList.remove('waiting-video');
-  if(!video || !url) return;
-  const src = url + (url.includes('?') ? '&' : '?') + 't=' + Date.now();
-  video.src = src;
-  video.style.display = 'block';
-  if(empty) empty.style.display = 'none';
-  if(dl && dlRow){
-    dl.href = src;
-    dl.download = 'niteos_video_' + (projectId || 'out').slice(0,8) + '.mp4';
-    dlRow.style.display = 'flex';
-  }
-  try{ video.load(); }catch(_){}
-  try{ video.play().catch(()=>{}); }catch(_){}
-  try{
-    requestAnimationFrame(() => {
-      document.getElementById('resultCard')?.scrollIntoView({behavior:'smooth', block:'center'});
-    });
-  }catch(_){}
-  setVideoPipelineStep(3);
-}
+
+
 function setBusy(on, msg){
   busy = !!on;
   const box = document.getElementById('statusBox');
@@ -1336,7 +1172,7 @@ function setBusy(on, msg){
     } else if(msg && /шаг 1|ночн|подсветк|концепц/i.test(msg)){
       busyTitle.textContent = 'Шаг 1 из 2 · Ночь + свет';
     } else if(msg && /шаг 2|видео|ролик/i.test(msg)){
-      busyTitle.textContent = 'Шаг 2 из 2 · Видео';
+      busyTitle.textContent = 'Генерация';
     } else if(msg && /загружаю картинк|загружаю результат/i.test(msg)){
       busyTitle.textContent = 'Почти готово';
     } else if(msg && /правк|разметк|редактир/i.test(msg)){
@@ -1345,7 +1181,7 @@ function setBusy(on, msg){
       busyTitle.textContent = 'Идёт генерация';
     }
   }
-  if(!videoPipelineActive) updateVideoPanel(lastState);
+  if(!false) 
 }
 function loadFinalImageAndWait(img, url, timeoutMs){
   return new Promise((resolve) => {
@@ -1395,8 +1231,8 @@ async function applyStudioPayload(data){
   syncProjectLabel(data.project_name || '');
   const st = data.state || {};
   renderChat(data.chat || []);
-  // During one-click video: do NOT wait for photo paint — user needs the reel, not the still.
-  const holdBusyForFinal = !!busy && !!data.final_url && !videoPipelineActive;
+
+  const holdBusyForFinal = !!busy && !!data.final_url && !false;
 
   const dropzone = document.getElementById('dropzone');
   const sourceImg = document.getElementById('sourceImg');
@@ -1413,8 +1249,8 @@ async function applyStudioPayload(data){
   let finalReadyPromise = null;
   if(data.final_url){
     const nextSrc = data.final_url + '?t=' + Date.now();
-    if(videoPipelineActive){
-      // Quietly keep final for stage-2 video; show still preview in video panel.
+    if(false){
+
       finalImg.src = nextSrc;
       const still = document.getElementById('videoStillPreview');
       if(still) still.src = nextSrc;
@@ -1459,8 +1295,8 @@ async function applyStudioPayload(data){
     const annUrl = (h.annotation_url || '').trim();
     const hasAnn = !!annUrl;
     const url = String(h.url || '').trim();
-    const videoUrl = String(h.video_url || '').trim();
-    const isVideo = (h.media_kind || '') === 'video' || !!videoUrl;
+    const videoUrl = '';
+    const isVideo = false;
     if(!url && !videoUrl) return '';
     const thumb = url || '';
     return `<button type="button" class="hist-item${active ? ' active' : ''}" title="${title}" data-hist-id="${esc(String(h.id))}" data-hist-url="${esc(url)}" data-video-url="${esc(videoUrl)}" data-media-kind="${isVideo ? 'video' : 'image'}">
@@ -1468,7 +1304,7 @@ async function applyStudioPayload(data){
         ${thumb ? `<img src="${esc(thumb)}?t=${histStamp}" alt="" loading="lazy" onerror="this.style.opacity='.35'">` : '<div class="muted" style="padding:18px">видео</div>'}
         ${hasAnn ? `<img class="hist-ann" src="${esc(annUrl)}?t=${histStamp}" alt="разметка">` : ''}
       </div>
-      <span>${label}${active ? ' · active' : ''}${isVideo ? ' · video' : ''}</span>
+      <span>${label}${active ? ' · active' : ''}${isVideo ? '' : ''}</span>
       ${hasAnn ? '<span class="hist-markup-tag">разметка · кисть/ластик</span>' : ''}
       <span class="hist-vote ${voteCls}">${esc(voteText)}</span>
       ${shortComment ? `<span class="hist-comment">${esc(shortComment)}</span>` : ''}
@@ -1495,23 +1331,20 @@ async function applyStudioPayload(data){
   document.getElementById('downloadBtn').disabled = !data.has_final;
   const copyBtn = document.getElementById('copyFinalBtn');
   if(copyBtn) copyBtn.disabled = !data.has_final;
-  const makeVidBtn = document.getElementById('makeVideoFromPhotoBtn');
-  if(makeVidBtn) makeVidBtn.disabled = !(data.has_final || data.has_source) || busy;
-  updateVideoPanel(data);
+  
   document.getElementById('chatBtn').disabled = !projectId || busy;
   const regenBtnApply = document.getElementById('regenBtn');
   if(regenBtnApply) regenBtnApply.disabled = !projectId || busy;
   setMarkupEnabled(!!data.has_final && !busy);
   updateEditToolUi();
-  if(!videoPipelineActive) scheduleFeedbackPrompt(data);
+  if(!false) scheduleFeedbackPrompt(data);
   if(data.has_final){
     if(finalReadyPromise){
       try{ await finalReadyPromise; }catch(_){}
     }
-    if(videoPipelineActive){
-      setVideoPipelineStep(2);
-      setBusy(true, 'Шаг 2 из 2: собираем видео из ночного кадра…');
-      setVideoStatus('Шаг 2 из 2: видео появится здесь…', false);
+    if(false){
+      
+      setBusy(true, 'Шаг 2 из 2: собираем концепцию из ночного кадра…');
       return;
     }
     const usedModel = data.routerai_model || (data.state && data.state.routerai_model) || '';
@@ -1838,11 +1671,11 @@ function latestHistoryNeedsFeedback(state, opts){
   if(!last) return !!state.feedback_required;
   const vote = String(last.feedback_vote || '').trim().toLowerCase();
   if(vote === 'like' || vote === 'dislike') return false;
-  // One-click video: unrated night concept must not block the reel.
+
   if(opts && opts.forVideo){
     const media = String(last.media_kind || '').toLowerCase();
     const kind = String(last.kind || '').toLowerCase();
-    return media === 'video' || kind.startsWith('video_');
+    return false || kind.startsWith('video_');
   }
   return true;
 }
@@ -1853,7 +1686,7 @@ function scheduleFeedbackPrompt(state){
   hideFeedbackToast();
   // Keep optional side form closed after render/refresh.
   // Do NOT auto-open the blocking gate here — only when user tries next action.
-  // BUT: always surface the feedback zone when a rating is pending (photo or video).
+
   if(zone) zone.classList.remove('open', 'required', 'blocking');
   if(!pendingAfterFeedback) closeFeedbackGate();
   const hasResult = !!(state && (state.has_final || state.has_video || (state.history || []).length));
@@ -1888,7 +1721,7 @@ function scheduleFeedbackPrompt(state){
     const title = document.getElementById('feedbackTitle');
     if(title){
       title.textContent = ((history.media_kind || history.kind || '') + '').includes('video')
-        ? 'Оценка этого видео'
+        ? 'Оценка этого результата'
         : 'Оценка этой генерации';
     }
     feedbackPromptedHistoryId = renderId;
@@ -1896,7 +1729,7 @@ function scheduleFeedbackPrompt(state){
   if(zone){
     zone.classList.remove('open', 'required', 'blocking');
   }
-  // Immediately require rating after a new result (photo or video) — popup only.
+
   openFeedbackGate({
     message: 'Поставьте оценку результата — без этого нельзя продолжить работу.'
   });
@@ -1906,7 +1739,7 @@ function requireFeedbackBeforeAction(pending){
   // Оценка обязательна перед новой генерацией или новым проектом.
   const kind = (pending && pending.type) || '';
   if(kind === 'chat') return false;
-  const forVideo = kind === 'generate' && (studioMode === 'video' || videoPipelineActive);
+  const forVideo = kind === 'generate' && (false);
   if(latestHistoryNeedsFeedback(lastState, {forVideo})){
     if(lastState) lastState.feedback_required = true;
     promptFeedbackRequired(
@@ -1930,8 +1763,8 @@ async function resumePendingAfterFeedback(){
       await pending.resume();
       return;
     }
-    if(studioMode === 'video'){
-      await runSelectedVideo();
+    if(false){
+      
       return;
     }
     await runStudioGeneration({skipFeedbackGate:true});
@@ -2027,13 +1860,13 @@ async function restoreHistoryVersion(historyId, previewUrl, opts){
   }
   const mediaKind = (opts && opts.mediaKind) || 'image';
   const videoUrl = (opts && opts.videoUrl) || '';
-  if(mediaKind === 'video' || videoUrl){
-    setStudioMode('video');
+  if(false || videoUrl){
+    
     lastState = Object.assign({}, lastState, {
       has_video: true,
       video_url: videoUrl || lastState.video_url,
     });
-    updateVideoPanel(lastState);
+    
   } else if(previewUrl){
     previewHistory(previewUrl);
   }
@@ -2505,7 +2338,7 @@ function resetStudioUi(){
   }
   clearEditMarkup();
   setMarkupEnabled(false);
-  updateVideoPanel({});
+  
 
   const hist = document.getElementById('historyStrip');
   if(hist) hist.innerHTML = '<div class="muted">История версий появится после генерации</div>';
@@ -2554,8 +2387,8 @@ async function refreshRouteraiBalance(){
 async function assertRouteraiSpend(kind){
   const data = await refreshRouteraiBalance();
   if(!data || data.credits == null) return true;
-  if(kind === 'video' && data.video_ok === false){
-    throw Object.assign(new Error(data.message || 'Недостаточно баланса для видео'), {status:402});
+  if(false && data.video_ok === false){
+    throw Object.assign(new Error(data.message || 'Недостаточно баланса для генерации'), {status:402});
   }
   if(kind === 'photo' && data.photo_ok === false){
     throw Object.assign(new Error(data.message || 'Баланс низкий для фото — сначала пополните, чтобы хватало на видео'), {status:402});
@@ -2579,7 +2412,7 @@ async function loadMyProjectsList(){
   if(status) status.textContent = 'Загружаю…';
   box.innerHTML = '';
   try{
-    const data = await api('/api/auth/my-projects?limit=40');
+    const data = await api('/api/my-projects?limit=40');
     const items = Array.isArray(data.projects) ? data.projects : [];
     if(status){
       status.textContent = items.length
@@ -2587,7 +2420,7 @@ async function loadMyProjectsList(){
         : (data.ok === false ? 'Войдите через MAX, чтобы видеть свои проекты' : 'Пока нет проектов — создайте новый');
     }
     if(!items.length){
-      box.innerHTML = '<div class="muted">Здесь появятся ваши фото- и видео-проекты</div>';
+      box.innerHTML = '<div class="muted">Здесь появятся ваши фото-проекты</div>';
       return;
     }
     const stamp = Date.now();
@@ -2671,49 +2504,10 @@ async function loadStudioModels(){
       };
     }
   }catch(_){}
-  try{
-    const data = await api('/api/routerai-video-models');
-    const sel = document.getElementById('videoModelSelect');
-    if(sel && Array.isArray(data.models)){
-      const saved = (()=>{ try{ return localStorage.getItem('niteos_routerai_video_model') || ''; }catch(_){ return ''; }})();
-      const def = saved || data.default || (data.models[0] && data.models[0].id) || '';
-      sel.innerHTML = data.models.map(m => {
-        const id = m.id || '';
-        const label = m.label || id;
-        return `<option value="${esc(id)}"${id===def?' selected':''}>${esc(label)}</option>`;
-      }).join('');
-      if(def) sel.value = def;
-      sel.onchange = () => {
-        try{ localStorage.setItem('niteos_routerai_video_model', sel.value || ''); }catch(_){}
-      };
-    }
-  }catch(_){}
-  initVideoDurationSelect();
 }
-function getVideoDurationSec(){
-  const el = document.getElementById('videoDurationRange');
-  let n = el ? parseInt(el.value, 10) : 8;
-  if(!Number.isFinite(n)) n = 8;
-  return Math.max(5, Math.min(15, n));
-}
-function syncVideoDurationLabel(){
-  const label = document.getElementById('videoDurationLabel');
-  if(label) label.textContent = getVideoDurationSec() + ' сек';
-}
-function initVideoDurationSelect(){
-  const el = document.getElementById('videoDurationRange');
-  if(!el) return;
-  const saved = (()=>{ try{ return localStorage.getItem('niteos_video_duration_sec') || ''; }catch(_){ return ''; }})();
-  const n = parseInt(saved, 10);
-  if(Number.isFinite(n) && n >= 5 && n <= 15) el.value = String(n);
-  const persist = () => {
-    syncVideoDurationLabel();
-    try{ localStorage.setItem('niteos_video_duration_sec', String(getVideoDurationSec())); }catch(_){}
-  };
-  el.oninput = persist;
-  el.onchange = persist;
-  syncVideoDurationLabel();
-}
+
+
+
 async function createProject(opts){
   if(!(opts && opts.skipFeedbackGate) && requireFeedbackBeforeAction({type:'createProject'})) return;
   try{
@@ -2795,11 +2589,10 @@ async function uploadSourceFile(file){
     } else {
       await refreshState();
     }
-    updateVideoPanel(lastState);
-    setBusy(false, data.message || 'Новое фото загружено. Сделайте ночную концепцию заново, затем видео.');
+    
+    setBusy(false, data.message || 'Новое фото загружено. Сделайте ночную концепцию заново, .');
     document.getElementById('startBtn').disabled = false;
-    if(studioMode === 'video'){
-      setVideoStatus('Новое фото — сначала ночная концепция, потом видео (старая концепция сброшена)', false);
+    if(false){
     }
   }catch(err){
     setError(String(err.message || err));
@@ -2878,7 +2671,7 @@ function pickClipboardImage(e){
   return null;
 }
 window.addEventListener('paste', async (e) => {
-  if(studioMode === 'video') return; // video dropzone/handler owns paste in video mode
+  if(false) return;
   const tag = (e.target && e.target.tagName || '').toLowerCase();
   if(tag === 'textarea' || tag === 'input') return;
   const file = pickClipboardImage(e);
@@ -3047,403 +2840,21 @@ function fillChatPrompt(text){
 function quickChat(text){
   fillChatPrompt(text);
 }
-function setStudioMode(mode){
-  studioMode = (mode === 'video') ? 'video' : 'photo';
-  document.body.classList.toggle('mode-photo', studioMode === 'photo');
-  document.body.classList.toggle('mode-video', studioMode === 'video');
-  const photoTab = document.getElementById('modePhotoTab');
-  const videoTab = document.getElementById('modeVideoTab');
-  if(photoTab) photoTab.classList.toggle('active', studioMode === 'photo');
-  if(videoTab) videoTab.classList.toggle('active', studioMode === 'video');
-  const hint = document.getElementById('modeHint');
-  if(hint){
-    hint.textContent = studioMode === 'video'
-      ? 'Одна кнопка: ночная концепция → видео. Модель видео запоминается.'
-      : 'Загрузите фото → сгенерируйте ночную концепцию. Модель фото запоминается.';
-  }
-  if(studioMode === 'video'){
-    autoPickVideoScenario(lastState);
-    updateVideoPanel(lastState);
-  }
-  try{
-    if(studioMode === 'video') history.replaceState({}, '', location.pathname + location.search + '#video');
-    else history.replaceState({}, '', location.pathname + location.search);
-  }catch(_){}
-}
-function autoPickVideoScenario(data){
-  const d = data || lastState || {};
-  const hasClip = !!(d.has_source_clip || d.clip_url);
-  const hasSource = !!d.has_source;
-  const hasFinal = !!d.has_final;
-  // Главный путь — как на фото: наша вечерняя концепция, потом облёт.
-  if(hasSource || hasFinal){
-    videoScenario = 'from_photo';
-  } else if(hasClip){
-    videoScenario = 'from_clip_relight';
-  } else {
-    videoScenario = 'from_photo';
-  }
-  return videoScenario;
-}
-function pickVideoScenario(scenario){
-  videoScenario = scenario || 'from_photo';
-  updateVideoPanel(lastState);
-}
-function setVideoStatus(msg, isErr){
-  const box = document.getElementById('videoStatusBox');
-  if(!box) return;
-  box.textContent = msg || '';
-  box.classList.toggle('err', !!isErr);
-  box.classList.toggle('busy', !isErr && /…|минут|загруз/i.test(msg || ''));
-}
-function updateVideoPanel(data){
-  const d = data || lastState || {};
-  autoPickVideoScenario(d);
-  const runBtn = document.getElementById('videoRunBtn');
-  const makeVidBtn = document.getElementById('makeVideoFromPhotoBtn');
-  const pickMedia = document.getElementById('videoPickMediaBtn');
-  const clipName = document.getElementById('videoClipName');
-  const video = document.getElementById('resultVideo');
-  const empty = document.getElementById('videoEmptyHint');
-  const dlRow = document.getElementById('videoDownloadRow');
-  const dl = document.getElementById('videoDownloadLink');
-  const hasClip = !!(d.has_source_clip || d.clip_url);
-  const canStart = !!projectId && !busy && (!!d.has_source || !!d.has_final || (videoScenario === 'from_clip_relight' && hasClip));
-  let status = '';
-  if(videoScenario === 'from_photo'){
-    if(d.video_url){
-      status = 'Видео готово — смотрите превью справа';
-    } else if(d.last_video_error){
-      status = String(d.last_video_error);
-    } else if(d.has_final){
-      status = 'Ночной кадр готов (это фото в истории). Видео ещё нет — нажмите «Сделать видео», шаг 2 соберёт ролик.';
-    } else if(d.has_source){
-      status = 'Фото есть — одна кнопка: ночная концепция → видео';
-    } else {
-      status = 'Добавьте дневное фото фасада';
-    }
-  } else {
-    status = hasClip
-      ? 'Клип загружен — «Сделать видео» подсветит его автоматически'
-      : 'Добавьте фото фасада (предпочтительно) или клип';
-  }
-  if(runBtn){
-    runBtn.disabled = !canStart;
-    runBtn.textContent = 'Сделать видео';
-  }
-  if(makeVidBtn) makeVidBtn.disabled = !canStart || (!d.has_final && !d.has_source);
-  if(pickMedia) pickMedia.disabled = !projectId || busy;
-  if(clipName){
-    if(hasClip && videoScenario !== 'from_photo') clipName.textContent = 'Клип загружен';
-    else if(d.has_final) clipName.textContent = 'Ночная концепция готова';
-    else if(d.has_source) clipName.textContent = 'Дневное фото загружено';
-    else clipName.textContent = '';
-  }
-  if(!busy) setVideoStatus(status, !!(d.last_video_error && !d.video_url));
-  if(empty && !d.video_url){
-    if(d.last_video_error){
-      empty.style.display = 'block';
-      empty.innerHTML = '<div style="color:#e89a9a;font-weight:700;margin:0 0 8px">Видео не собралось</div><div style="text-align:left;max-width:420px;margin:0 auto">' + esc(String(d.last_video_error)) + '</div>';
-    } else if(d.has_final){
-      empty.style.display = 'block';
-      empty.textContent = 'Ночной кадр уже есть (миниатюра в истории). Здесь появится ВИДЕО после шага 2 — нажмите «Сделать видео».';
-    } else {
-      empty.style.display = (document.getElementById('videoStage')?.classList.contains('waiting-video') ? 'none' : 'block');
-      if(!document.getElementById('videoStage')?.classList.contains('waiting-video')){
-        empty.textContent = 'Здесь появится готовое видео';
-      }
-    }
-  }
-  if(video && dlRow && dl){
-    if(d.video_url){
-      showVideoResult(d.video_url);
-    } else {
-      video.removeAttribute('src');
-      video.style.display = 'none';
-      dlRow.style.display = 'none';
-    }
-  }
-}
-function goMakeNightConcept(){
-  setStudioMode('photo');
-  const box = document.getElementById('statusBox');
-  if(lastState && lastState.has_source){
-    if(box){
-      box.classList.remove('err');
-      box.textContent = 'Или вернитесь во вкладку «Видео» и нажмите «Сделать видео» — концепция и ролик пойдут сами.';
-    }
-    try{ document.getElementById('startBtn')?.focus({preventScroll:true}); }catch(_){}
-  } else if(box){
-    box.classList.add('err');
-    box.textContent = 'Сначала загрузите дневное фото фасада (Ctrl+V или файл).';
-  }
-}
-async function runVideoOneClick(){ setError('В этом пакете только фото — видео отключено'); return; 
-  if(!projectId || busy) return;
-  autoPickVideoScenario(lastState);
-  if(videoScenario === 'from_clip_relight'){
-    if(!(lastState && (lastState.has_source_clip || lastState.clip_url))){
-      setVideoStatus('Сначала загрузите файл', true);
-      return;
-    }
-    await runSelectedVideo();
-    return;
-  }
-  // Главный путь: концепция (если нет) → видео. Одна кнопка.
-  if(!(lastState && (lastState.has_source || lastState.has_final))){
-    setVideoStatus('Сначала загрузите дневное фото фасада', true);
-    return;
-  }
-  await runPhotoThenVideo();
-}
-async function runPhotoThenVideoOrGo(){
-  await runVideoOneClick();
-}
-async function makeVideoFromNightConcept(){
-  await runVideoOneClick();
-}
-async function runPhotoThenVideo(){
-  // Одна кнопка во вкладке «Видео»: день → ночная концепция → ролик.
-  if(!projectId || busy) return;
-  try{
-    // Если концепция уже есть — только видео-холд; иначе и фото-запас, и видео.
-    if(!(lastState && lastState.has_final)) await assertRouteraiSpend('photo');
-    await assertRouteraiSpend('video');
-  }catch(err){
-    setVideoStatus(String(err.message || err), true);
-    setError(String(err.message || err));
-    return;
-  }
-  // Не уходим на вкладку «Фото» — концепция делается в фоне, UI остаётся на Видео.
-  if(!projectId || busy) return;
-  if(requireFeedbackBeforeAction({type:'generate'})) return;
-  videoPipelineActive = true;
-  setStudioMode('video');
-  try{
-    if(!(lastState && lastState.has_final)){
-      if(!(lastState && lastState.has_source)){
-        setVideoStatus('Сначала загрузите дневное фото', true);
-        return;
-      }
-      setVideoPipelineStep(1);
-      setBusy(true, 'Шаг 1 из 2: ночная концепция с архитектурной подсветкой…');
-      setVideoStatus('Шаг 1 из 2: ночной кадр с подсветкой…', false);
-      let ok = false;
-      try{
-        ok = await runStudioGeneration({
-          skipFeedbackGate: true,
-          skipBusyCheck: true,
-          rethrow: true,
-          busyMessage: 'Шаг 1 из 2: ночная концепция с архитектурной подсветкой…',
-        });
-      }catch(err){
-        if(err && err.status === 409) return;
-        setVideoPipelineStep(0);
-        setVideoStatus(String(err.message || err || 'Концепция не собралась'), true);
-        return;
-      }
-      if(!ok) await refreshState();
-      if(!(lastState && lastState.has_final)){
-        setVideoPipelineStep(0);
-        setError('Ночная концепция не собралась — видео не запускаю. Попробуйте ещё раз.');
-        setVideoStatus('Концепция не собралась — нажмите «Сделать видео» ещё раз', true);
-        return;
-      }
-    }
-    pickVideoScenario('from_photo');
-    setStudioMode('video');
-    setVideoPipelineStep(2);
-    // Important: clear busy so stage-2 can start (runSelectedVideo checks busy).
-    busy = false;
-    setVideoStatus('Шаг 2 из 2: собираем видео… Ролик появится здесь.', false);
-    await runSelectedVideo({skipBusyCheck: true, fromPipeline: true});
-  }finally{
-    videoPipelineActive = false;
-    if(!(lastState && lastState.video_url)) setVideoPipelineStep(0);
-    updateVideoPanel(lastState);
-  }
-}
-async function runSelectedVideo(opts){
-  if(!projectId) return;
-  if(!(opts && opts.skipBusyCheck) && busy) return;
-  if(requireFeedbackBeforeAction({type:'generate'})) return;
-  if(videoScenario === 'from_photo' || videoScenario === 'before_after'){
-    if(!(lastState && lastState.has_final)){
-      setVideoStatus('Нужна ночная концепция — иначе в видео не будет нашей подсветки', true);
-      return;
-    }
-  }
-  if(videoScenario !== 'from_photo' && !(lastState && (lastState.has_source_clip || lastState.clip_url))){
-    setVideoStatus('Сначала загрузите клип', true);
-    return;
-  }
-  const labels = {
-    from_photo: 'Шаг 2 из 2: видео из ночной концепции… Камера едет, свет не пересобираем.',
-    from_clip_relight: 'Подсветка клипа моделью…',
-    before_after: 'Склейка: клип + концепция «после»…',
-  };
-  try{
-    if(!(opts && opts.fromPipeline)) await assertRouteraiSpend('video');
-    if(opts && opts.fromPipeline) setVideoPipelineStep(2);
-    setBusy(true, labels[videoScenario] || 'Генерация видео…');
-    setVideoStatus(labels[videoScenario] || 'Генерация…', false);
-    const fd = new FormData();
-    fd.append('mode', videoScenario);
-    fd.append('duration_sec', String(getVideoDurationSec()));
-    const modelSel = document.getElementById('videoModelSelect');
-    if(modelSel && modelSel.value) fd.append('routerai_model', modelSel.value);
-    const data = await api(`/api/projects/${projectId}/video/generate`, {method:'POST', body: fd});
-    const resultUrl = data.result_url || '';
-    lastState = Object.assign({}, lastState, {
-      has_video: true,
-      video_url: resultUrl || lastState.video_url,
-      history: data.history || lastState.history,
-      feedback_required: true,
-      active_history_id: data.active_history_id || data.history_id,
-    });
-    if(resultUrl) showVideoResult(resultUrl);
-    else updateVideoPanel(lastState);
-    try{ await refreshState(); }catch(_){}
-    if(lastState && lastState.video_url) showVideoResult(lastState.video_url);
-    try{ await refreshRouteraiBalance(); }catch(_){}
-    setBusy(false, 'Видео готово — смотрите превью справа / по центру');
-    setVideoStatus('Видео готово — можно смотреть и скачать', false);
-    setVideoPipelineStep(3);
-    scheduleFeedbackPrompt(lastState);
-  }catch(err){
-    setVideoPipelineStep(0);
-    if(err.status === 409){
-      promptFeedbackRequired(err.message, {type:'generate', resume:() => runSelectedVideo()});
-      busy = false;
-      updateVideoPanel(lastState);
-      return;
-    }
-    setError(humanizeVideoClientError(String(err.message || err)));
-    setVideoStatus(humanizeVideoClientError(String(err.message || err)), true);
-    busy = false;
-    lastState = Object.assign({}, lastState, { last_video_error: humanizeVideoClientError(String(err.message || err)) });
-    updateVideoPanel(lastState);
-  }
-}
-function humanizeVideoClientError(msg){
-  const t = String(msg || '');
-  const low = t.toLowerCase();
-  if(low.includes('insufficient balance') || low.includes('402') || low.includes('available balance')){
-    return 'RouterAI отказал по балансу (их API). Пополните баланс и снова «Сделать видео».';
-  }
-  return t;
-}
-function showVideoMediaPreview(file){
-  const img = document.getElementById('videoSourceImg');
-  const vid = document.getElementById('videoSourcePreview');
-  const zone = document.getElementById('videoDropzone');
-  if(!file) return;
-  const url = URL.createObjectURL(file);
-  if((file.type || '').startsWith('video/')){
-    if(img){ img.style.display = 'none'; img.removeAttribute('src'); }
-    if(vid){ vid.src = url; vid.style.display = 'block'; }
-  } else {
-    if(vid){ vid.style.display = 'none'; vid.removeAttribute('src'); }
-    if(img){ img.src = url; img.style.display = 'block'; }
-  }
-  if(zone) zone.classList.add('has-image');
-}
-async function ingestVideoMediaFile(file){
-  if(!file) return;
-  const isVideo = (file.type || '').startsWith('video/') || /\.(mp4|mov|webm|mkv)$/i.test(file.name || '');
-  showVideoMediaPreview(file);
-  if(!projectId) await ensureProject();
-  if(isVideo){
-    if(videoScenario === 'from_photo') pickVideoScenario('from_clip_relight');
-    setBusy(true, 'Загружаю клип…');
-    setVideoStatus('Загружаю клип…', false);
-    const fd = new FormData();
-    fd.append('clip', file, file.name || 'clip.mp4');
-    const data = await api(`/api/projects/${projectId}/video/upload-clip`, {method:'POST', body: fd});
-    lastState = Object.assign({}, lastState, {
-      has_source_clip: true,
-      clip_url: data.clip_url || '',
-    });
-    updateVideoPanel(lastState);
-    setBusy(false, data.message || 'Клип загружен');
-    setVideoStatus(data.message || 'Клип загружен', false);
-    return;
-  }
-  // Image → same as photo source upload (also invalidates old concept/video on server)
-  pickVideoScenario('from_photo');
-  setBusy(true, 'Загружаю фото…');
-  setVideoStatus('Загружаю фото…', false);
-  const fd = new FormData();
-  fd.append('file', file, file.name || 'facade.jpg');
-  const data = await api(`/api/projects/${projectId}/source`, {method:'POST', body: fd});
-  if(data && (data.has_final !== undefined || data.history)){
-    await applyStudioPayload(data);
-  } else {
-    await refreshState();
-  }
-  updateVideoPanel(lastState);
-  const msg = data.message || 'Фото загружено — нажмите «Сделать видео» (концепция → ролик одной кнопкой).';
-  setBusy(false, msg);
-  setVideoStatus(msg, false);
-}
-async function uploadVideoClip(ev){
-  const file = ev && ev.target && ev.target.files && ev.target.files[0];
-  try{
-    if(file) await ingestVideoMediaFile(file);
-  }catch(err){
-    setError(String(err.message || err));
-    setVideoStatus(String(err.message || err), true);
-    busy = false;
-    updateVideoPanel(lastState);
-  }finally{
-    try{ if(ev && ev.target) ev.target.value = ''; }catch(_){}
-  }
-}
-(function bindVideoMediaDropzone(){
-  const zone = document.getElementById('videoDropzone');
-  const input = document.getElementById('videoMediaInput');
-  const pick = document.getElementById('videoPickMediaBtn');
-  if(!zone || !input) return;
-  if(pick) pick.addEventListener('click', () => input.click());
-  zone.addEventListener('click', () => input.click());
-  zone.addEventListener('keydown', (e) => {
-    if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); input.click(); }
-  });
-  input.addEventListener('change', uploadVideoClip);
-  zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('drag'); });
-  zone.addEventListener('dragleave', () => zone.classList.remove('drag'));
-  zone.addEventListener('drop', async (e) => {
-    e.preventDefault();
-    zone.classList.remove('drag');
-    const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
-    if(!file) return;
-    try{ await ingestVideoMediaFile(file); }
-    catch(err){
-      setError(String(err.message || err));
-      setVideoStatus(String(err.message || err), true);
-      busy = false;
-    }
-  });
-  const onPaste = async (e) => {
-    if(studioMode !== 'video') return;
-    const items = e.clipboardData && e.clipboardData.items;
-    if(!items) return;
-    for(const it of items){
-      if(it.kind !== 'file') continue;
-      const file = it.getAsFile();
-      if(!file) continue;
-      e.preventDefault();
-      try{ await ingestVideoMediaFile(file); }catch(err){
-        setError(String(err.message || err));
-        setVideoStatus(String(err.message || err), true);
-        busy = false;
-      }
-      break;
-    }
-  };
-  zone.addEventListener('paste', onPaste);
-  window.addEventListener('paste', onPaste);
-})();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 function downloadFinal(){
   if(!projectId) return;
   (async () => {
@@ -3525,13 +2936,7 @@ ensureProject().then(async () => {
   syncPhotoWarnVisibility();
   maybeShowWelcomeTour();
   await loadStudioModels();
-  const modeQ = (new URLSearchParams(location.search).get('mode') || '').toLowerCase();
-  if(modeQ === 'video' || location.hash === '#video' || location.hash === '#videoPanel'){
-    setStudioMode('video');
-  } else {
-    setStudioMode('photo');
-  }
-}).catch(err => setError(String(err.message || err)));
+  }).catch(err => setError(String(err.message || err)));
 </script>
 </body>
 </html>

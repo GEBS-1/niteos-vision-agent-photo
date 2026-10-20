@@ -542,23 +542,16 @@ def get_studio_state(base: Path) -> dict:
     history_urls = []
     for item in history[-12:]:
         fname = str((item or {}).get("file") or (item or {}).get("filename") or "")
-        if not fname and not (item or {}).get("video_file"):
+        if not fname:
             continue
         bare = fname.replace("\\", "/").split("/")[-1] if fname else ""
-        vid_rel = str((item or {}).get("video_file") or "").replace("\\", "/")
-        vid_bare = vid_rel.split("/")[-1] if vid_rel else ""
-        if not bare and vid_bare:
-            bare = vid_bare
         ann_rel = str((item or {}).get("annotation_file") or "").replace("\\", "/")
         ann_bare = ann_rel.split("/")[-1] if ann_rel else ""
         history_urls.append({
             "id": (item or {}).get("id") or bare,
             "url": f"/api/projects/{base.name}/file/history/{bare}" if bare else "",
-            "video_url": (
-                f"/api/projects/{base.name}/file/history/{vid_bare}"
-                if vid_bare else ""
-            ),
-            "media_kind": (item or {}).get("media_kind") or ("video" if vid_bare else "image"),
+            "video_url": "",
+            "media_kind": (item or {}).get("media_kind") or "image",
             "note": (item or {}).get("note") or "",
             "kind": (item or {}).get("kind") or "",
             "created_at": (item or {}).get("created_at") or "",
@@ -618,30 +611,12 @@ def get_studio_state(base: Path) -> dict:
             f"/api/projects/{base.name}/file/input/building.png"
             if (base / "input" / "building.png").exists() else ""
         ),
-        "has_video": (base / "output" / "video" / "result.mp4").exists(),
-        "video_url": (
-            f"/api/projects/{base.name}/file/output/video/result.mp4"
-            if (base / "output" / "video" / "result.mp4").exists()
-            else next(
-                (
-                    f"/api/projects/{base.name}/file/history/{Path(str(item.get('video_file') or '')).name}"
-                    for item in reversed(history)
-                    if isinstance(item, dict) and str(item.get("video_file") or "").strip()
-                ),
-                "",
-            )
-        ),
-        "has_source_clip": (base / "output" / "video" / "source_clip.mp4").exists(),
-        "clip_url": (
-            f"/api/projects/{base.name}/file/output/video/source_clip.mp4"
-            if (base / "output" / "video" / "source_clip.mp4").exists() else ""
-        ),
-        "last_video_job": meta.get("last_video_job") or {},
-        "last_video_error": (
-            str((meta.get("last_video_job") or {}).get("error") or "")
-            if str((meta.get("last_video_job") or {}).get("status") or "") == "error"
-            else ""
-        ),
+        "has_video": False,
+        "video_url": "",
+        "has_source_clip": False,
+        "clip_url": "",
+        "last_video_job": {},
+        "last_video_error": "",
     }
 
 

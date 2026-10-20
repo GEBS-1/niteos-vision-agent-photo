@@ -50,19 +50,6 @@ from vision_agent.orchestrator import (
 )
 from vision_agent.reference_catalog import EXAMPLES_DIR, THUMBS_DIR, get_reference_by_id, list_references_public, reference_path
 from vision_agent.studio_html import AGENT_STUDIO_HTML
-from vision_agent import max_auth as max_auth_mod
-from vision_agent import max_bot as max_bot_mod
-from vision_agent import max_bot_api as max_bot_api_mod
-from vision_agent.video_pipeline import (
-    CLIP_RELIGHT_PROMPT,
-    PHOTO_OVERVIEW_PROMPT,
-    concat_before_after,
-    has_ffmpeg,
-    run_clip_relight,
-    run_image_to_video,
-    trim_video,
-    video_model,
-)
 
 
 ROOT = Path(__file__).resolve().parent
@@ -98,25 +85,10 @@ for path in (
     path.mkdir(parents=True, exist_ok=True)
 
 CONTACT_PHONE = os.getenv("CONTACT_PHONE", "8 843 202 21 39").strip()
-MAX_GROUP_JOIN_URL = os.getenv(
-    "MAX_GROUP_JOIN_URL",
-    "https://max.ru/join/srh_oL9y5t9jt9ZCA_wkQ1dXP5DjO0WmMO7a8IbSi3k",
-).strip()
 # Куда слать копию обращений в MAX (ваш user_id). Пусто = только копится в /admin/support
-MAX_SUPPORT_NOTIFY_USER_ID = os.getenv("MAX_SUPPORT_NOTIFY_USER_ID", "").strip()
-MAX_BOT_TOKEN = os.getenv("MAX_BOT_TOKEN", "").strip()
-MAX_BOT_USERNAME = os.getenv("MAX_BOT_USERNAME", "").strip()
-MAX_STUDIO_REQUIRE_AUTH = os.getenv("MAX_STUDIO_REQUIRE_AUTH", "0").strip().lower() in {
-    "1",
-    "true",
-    "yes",
-    "on",
-}
-MAX_WEBHOOK_SECRET = os.getenv("MAX_WEBHOOK_SECRET", "").strip()
 PUBLIC_BASE_URL = (
     os.getenv("PUBLIC_BASE_URL") or os.getenv("NITEOS_PUBLIC_URL") or "http://194.226.187.101"
 ).rstrip("/")
-MAX_SESSION_COOKIE = "niteos_max_uid"
 LANDING_DIR = ROOT / "landing_preview"
 CATALOG_ADMIN_PASSWORD = os.getenv("CATALOG_ADMIN_PASSWORD", "").strip()
 # Лимит генераций по cookie — пока отключён (включить: RENDER_LIMIT_ENABLED = True)
@@ -145,11 +117,6 @@ AUTO_SCENARIO_CLASSIFIER_MODEL = os.getenv(
 _usage_lock = threading.Lock()
 
 
-def max_group_widget_html() -> str:
-    """Плавающий QR на dealer/admin отключён — в студии своя иконка поддержки."""
-    return ""
-
-
 THEME_BOOT_HTML = """
 <script>
 (function(){
@@ -166,22 +133,15 @@ THEME_BOOT_HTML = """
 
 
 def inject_page_widgets(html: str) -> str:
-    widget = max_group_widget_html()
-    html = html.replace("{{MAX_GROUP_WIDGET}}", widget)
     if "{{THEME_BOOT}}" in html:
         html = html.replace("{{THEME_BOOT}}", THEME_BOOT_HTML)
     elif "niteos_theme" not in html and "</head>" in html:
         html = html.replace("</head>", THEME_BOOT_HTML + "\n</head>", 1)
-    from urllib.parse import quote
-    join_url = MAX_GROUP_JOIN_URL or "#"
-    qr_url = (
-        f"https://api.qrserver.com/v1/create-qr-code/?size=104x104&data={quote(join_url, safe='')}"
-        if MAX_GROUP_JOIN_URL else ""
-    )
-    return (
-        html.replace("{{MAX_GROUP_JOIN_URL}}", join_url)
-        .replace("{{MAX_GROUP_QR_URL}}", qr_url)
-    )
+    html = html.replace("{{MAX_GROUP_WIDGET}}", "")
+    html = html.replace("{{MAX_GROUP_JOIN_URL}}", "#")
+    html = html.replace("{{MAX_GROUP_QR_URL}}", "")
+    return html
+
 
 
 IES_LINEAR = "МАГИСТРАЛЬ 205 170 ЛмВт [КОНСОЛЬ] Д.ies"
@@ -219,26 +179,6 @@ ROUTERAI_IMAGE_MODELS: list[dict[str, str]] = [
         "label": "GPT-5 Image (OpenAI)",
         "eta": "~3–10 мин",
         "eta_sec": "360",
-    },
-]
-ROUTERAI_VIDEO_MODELS: list[dict[str, str]] = [
-    {
-        "id": "bytedance/seedance-2.0-fast",
-        "label": "Seedance 2.0 Fast",
-        "eta": "~1–3 мин",
-        "eta_sec": "120",
-    },
-    {
-        "id": "bytedance/seedance-2.0-mini",
-        "label": "Seedance 2.0 Mini",
-        "eta": "~1–2 мин",
-        "eta_sec": "90",
-    },
-    {
-        "id": "bytedance/seedance-2.0",
-        "label": "Seedance 2.0",
-        "eta": "~2–5 мин",
-        "eta_sec": "180",
     },
 ]
 ROUTERAI_MODEL_ALIASES: dict[str, str] = {
@@ -1804,81 +1744,6 @@ async def canonical_public_host(request: Request, call_next):
     return RedirectResponse(url=target, status_code=302)
 
 
-def render_landing_html() -> str:
-    path = LANDING_DIR / "index.html"
-    if not path.exists():
-        return inject_page_widgets(LANDING_HTML)
-    html = path.read_text(encoding="utf-8")
-    html = (
-        html.replace('src="assets/', 'src="/lp/')
-        .replace('poster="assets/', 'poster="/lp/')
-        .replace("url(assets/", "url(/lp/")
-    )
-    html = html.replace('href="favicon.ico"', 'href="/favicon.ico"')
-    start_url = max_auth_mod.bot_login_url(next_path="/studio")
-    html = html.replace(
-        'const MAX_START = /*__MAX_START__*/ "";',
-        f"const MAX_START = {json.dumps(start_url)};",
-    )
-    return inject_page_widgets(html)
-
-
-def render_max_auth_html(*, next_url: str = "/studio") -> str:
-    path = LANDING_DIR / "max_auth.html"
-    if not path.exists():
-        raise HTTPException(status_code=500, detail="landing_preview/max_auth.html не найден")
-    html = path.read_text(encoding="utf-8")
-    safe_next = next_url if next_url.startswith("/") else "/studio"
-    start_url = max_auth_mod.bot_login_url(next_path=safe_next)
-    html = html.replace(
-        'const MAX_START = /*__MAX_START__*/ "";',
-        f"const MAX_START = {json.dumps(start_url)};",
-    )
-    html = html.replace(
-        'const NEXT_URL = /*__NEXT_URL__*/ "/studio";',
-        f"const NEXT_URL = {json.dumps(safe_next)};",
-    )
-    configured = bool(max_auth_mod.bot_token() and max_auth_mod.bot_username())
-    html = html.replace(
-        'const MAX_CONFIGURED = /*__MAX_CONFIGURED__*/ false;',
-        f"const MAX_CONFIGURED = {json.dumps(configured)};",
-    )
-    return html
-
-
-def max_session_cookie_kwargs(request: Request | None = None) -> dict:
-    """Cookie сессии MAX: ~180 дней, Secure на HTTPS (по запросу или PUBLIC_BASE_URL)."""
-    secure = str(PUBLIC_BASE_URL or "").lower().startswith("https://")
-    if request is not None:
-        proto = (
-            (request.headers.get("x-forwarded-proto") or request.url.scheme or "http")
-            .split(",")[0]
-            .strip()
-            .lower()
-        )
-        if proto == "https":
-            secure = True
-        elif proto == "http" and not str(PUBLIC_BASE_URL or "").lower().startswith("https://"):
-            secure = False
-    return {
-        "httponly": True,
-        "samesite": "lax",
-        "max_age": 60 * 60 * 24 * 180,
-        "secure": secure,
-        "path": "/",
-    }
-
-
-def _attach_max_session(response: Response, uid: str, request: Request | None = None) -> str:
-    """Ставит cookie и возвращает signed token для localStorage."""
-    response.set_cookie(
-        key=MAX_SESSION_COOKIE,
-        value=str(uid),
-        **max_session_cookie_kwargs(request),
-    )
-    return max_auth_mod.issue_session_token(str(uid))
-
-
 def _canonical_public_netloc() -> str:
     raw = (PUBLIC_BASE_URL or "").strip()
     if not raw:
@@ -1889,18 +1754,6 @@ def _canonical_public_netloc() -> str:
         return (urlparse(raw).netloc or "").strip().lower()
     except Exception:
         return ""
-
-
-def max_session_user(request: Request) -> dict | None:
-    uid = (request.cookies.get(MAX_SESSION_COOKIE) or "").strip()
-    if not uid:
-        return None
-    return max_auth_mod.load_users(CLOUD_DIR).get(uid)
-
-
-def studio_auth_required() -> bool:
-    """Студия закрыта без MAX, когда включён флаг и задан токен бота."""
-    return MAX_STUDIO_REQUIRE_AUTH and bool(max_auth_mod.bot_token())
 
 
 # Разметка доработки и крупные data-URL в FormData иначе падают с "Part exceeded maximum size of 1024KB"
@@ -1991,8 +1844,6 @@ def track_project_action(
     data: dict | None = None,
 ) -> None:
     payload = dict(data or {})
-    if request is not None:
-        bind_max_user_to_project(base, request)
     ip = log_ip_activity(
         action=step,
         request=request,
@@ -2017,32 +1868,6 @@ def track_project_action(
     if ip:
         payload["client_ip"] = ip
     append_pipeline_log(base, step, payload)
-
-
-def bind_max_user_to_project(base: Path, request: Request | None) -> str:
-    """Привязать проект к MAX-аккаунту из cookie сессии (история при возврате)."""
-    if request is None:
-        return ""
-    row = max_session_user(request)
-    if not row:
-        return ""
-    uid = str(row.get("max_user_id") or "").strip()
-    if not uid:
-        return ""
-    meta = read_project_meta(base)
-    patch: dict = {}
-    if str(meta.get("max_user_id") or "") != uid:
-        patch["max_user_id"] = uid
-    name_bits = [row.get("first_name") or "", row.get("last_name") or ""]
-    display = " ".join(x for x in name_bits if x).strip()
-    if display and not meta.get("max_user_name"):
-        patch["max_user_name"] = display
-    uname = str(row.get("username") or "").strip()
-    if uname and not meta.get("max_username"):
-        patch["max_username"] = uname
-    if patch:
-        write_project_meta(base, patch)
-    return uid
 
 
 def read_pipeline_log(base: Path) -> list[dict]:
@@ -2454,87 +2279,6 @@ def save_render_history_entry(
     entry["generation_archive"] = archive_name
     history.append(entry)
     write_project_meta(base, {"render_history": history})
-    return entry
-
-
-def save_video_history_entry(
-    base: Path,
-    *,
-    mode: str,
-    model: str = "",
-    note: str = "",
-    client_ip: str = "",
-) -> dict | None:
-    """Сохранить готовое видео в историю проекта с обязательной оценкой (как фото)."""
-    result = base / "output" / "video" / "result.mp4"
-    if not result.exists():
-        return None
-    close_pending_feedback_for_new_render(base)
-    history_dir = base / "output" / "history"
-    history_dir.mkdir(parents=True, exist_ok=True)
-    meta = read_project_meta(base)
-    history: list[dict] = list(meta.get("render_history") or [])
-    seq = len(history) + 1
-    stamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
-    safe_mode = re.sub(r"[^a-z0-9_]+", "_", (mode or "video").lower()).strip("_") or "video"
-    vid_fname = f"{seq:03d}_{stamp}_video_{safe_mode}.mp4"
-    vid_dest = history_dir / vid_fname
-    shutil.copy2(result, vid_dest)
-
-    thumb_rel = ""
-    thumb_src = base / "output" / "video" / "still_for_video.jpg"
-    if not thumb_src.exists():
-        final = base / "output" / "final_imported_render.png"
-        source = base / "input" / "building.png"
-        if final.exists():
-            thumb_src = final
-        elif source.exists():
-            thumb_src = source
-    if thumb_src.exists():
-        thumb_fname = f"{seq:03d}_{stamp}_video_{safe_mode}_thumb.jpg"
-        thumb_dest = history_dir / thumb_fname
-        try:
-            if thumb_src.suffix.lower() in {".jpg", ".jpeg"}:
-                shutil.copy2(thumb_src, thumb_dest)
-            else:
-                with Image.open(thumb_src) as img:
-                    img.convert("RGB").save(thumb_dest, format="JPEG", quality=88, optimize=True)
-            thumb_rel = f"history/{thumb_fname}"
-        except Exception:
-            thumb_rel = ""
-
-    entry = {
-        "id": seq,
-        "file": thumb_rel or f"history/{vid_fname}",
-        "video_file": f"history/{vid_fname}",
-        "media_kind": "video",
-        "kind": f"video_{safe_mode}",
-        "note": (note or f"Видео · {safe_mode}")[:500],
-        "prompt": "",
-        "created_at": now_iso(),
-        "work_mode": "agent_studio",
-        "agent_studio": True,
-        "source_studio": "agent_studio",
-        "routerai_model": (model or "").strip() or (meta.get("routerai_video_model") or ""),
-        "client_ip": (client_ip or "").strip(),
-        "feedback_status": "pending",
-        "feedback_vote": "",
-        "feedback_comment": "",
-        "feedback_contact": "",
-        "feedback_issue_type": "",
-        "feedback_at": "",
-        "generation_archive": "",
-    }
-    archive_name = archive_generation_record(base, entry, client_ip=client_ip)
-    entry["generation_archive"] = archive_name
-    history.append(entry)
-    write_project_meta(base, {
-        "render_history": history,
-        "active_history_id": seq,
-        "last_history_entry": entry,
-        "feedback_required": True,
-        "last_feedback_vote": "",
-    })
     return entry
 
 
@@ -3874,80 +3618,6 @@ def routerai_key() -> str:
     return ""
 
 
-# RouterAI video API: страховой холд до старта (документация Seedance/Gen и ответ 402).
-# Обойти нельзя — только держать баланс ≥ холда. Фото жжём только если останется запас под видео.
-ROUTERAI_VIDEO_HOLD_RUB = float(os.getenv("ROUTERAI_VIDEO_HOLD_RUB", "500") or "500")
-ROUTERAI_PHOTO_HEADROOM_RUB = float(os.getenv("ROUTERAI_PHOTO_HEADROOM_RUB", "80") or "80")
-
-
-def fetch_routerai_credits() -> float | None:
-    """Текущий баланс RouterAI (₽) или None, если credits API недоступен."""
-    key = routerai_key()
-    if not key:
-        return None
-    req = urllib.request.Request(
-        "https://routerai.ru/api/v1/credits",
-        headers={"Authorization": f"Bearer {key}", "Accept": "application/json"},
-        method="GET",
-    )
-    try:
-        with urllib.request.urlopen(req, timeout=15) as resp:
-            raw = resp.read().decode("utf-8", errors="replace")
-        data = json.loads(raw) if raw.strip() else {}
-        # {"data":{"credits":432.17}} или {"credits":...}
-        if isinstance(data, dict):
-            inner = data.get("data") if isinstance(data.get("data"), dict) else data
-            for k in ("credits", "balance", "available", "amount"):
-                if k in inner and inner[k] is not None:
-                    return float(inner[k])
-    except Exception as exc:
-        print(f"[routerai credits] {exc}")
-    return None
-
-
-def _balance_short(credits: float | None) -> str:
-    if credits is None:
-        return "неизвестен"
-    return f"{credits:.2f} ₽"
-
-
-def require_routerai_balance_for_video() -> float | None:
-    """До вызова /videos: у RouterAI свободный остаток должен быть ≥ холда (обычно 500 ₽)."""
-    credits = fetch_routerai_credits()
-    hold = ROUTERAI_VIDEO_HOLD_RUB
-    if credits is not None and credits + 1e-6 < hold:
-        raise HTTPException(
-            status_code=402,
-            detail=(
-                f"На RouterAI сейчас {_balance_short(credits)}. "
-                f"Их видео-API не стартует при остатке ниже {hold:.0f} ₽ "
-                f"(страховой холд; спишут только цену ролика). "
-                f"Пополните баланс RouterAI минимум до {hold:.0f} ₽ — это их правило, не наша отсечка."
-            ),
-        )
-    return credits
-
-
-def require_routerai_balance_for_photo() -> float | None:
-    """
-    Фото идут через chat/completions без холда 500 — поэтому при малом балансе
-    они ещё работают и сжигают остаток. Режем фото заранее, чтобы не уйти ниже
-    порога видео (hold + небольшой запас на один рендер).
-    """
-    credits = fetch_routerai_credits()
-    hold = ROUTERAI_VIDEO_HOLD_RUB
-    floor = hold + max(0.0, ROUTERAI_PHOTO_HEADROOM_RUB)
-    if credits is not None and credits + 1e-6 < floor:
-        raise HTTPException(
-            status_code=402,
-            detail=(
-                f"На RouterAI {_balance_short(credits)}. "
-                f"Фото временно не запускаем: нужно оставить запас ≥ {hold:.0f} ₽ под видео "
-                f"(их холд) + ~{ROUTERAI_PHOTO_HEADROOM_RUB:.0f} ₽ на рендер "
-                f"(порог {floor:.0f} ₽). Пополните баланс — иначе видео снова упрётся в 402."
-            ),
-        )
-    return credits
 
 
 def routerai_model() -> str:
@@ -3977,182 +3647,6 @@ def image_data_url(path: Path) -> str:
     mime = mimetypes.guess_type(str(path))[0] or "image/png"
     data = base64.b64encode(path.read_bytes()).decode("ascii")
     return f"data:{mime};base64,{data}"
-
-
-def media_data_url(path: Path) -> str:
-    mime = mimetypes.guess_type(str(path))[0] or "application/octet-stream"
-    if path.suffix.lower() == ".mp4":
-        mime = "video/mp4"
-    data = base64.b64encode(path.read_bytes()).decode("ascii")
-    return f"data:{mime};base64,{data}"
-
-
-def _prepare_video_still(src: Path, out: Path, *, max_side: int = 1536) -> Path:
-    """Downscale still for image-to-video; keep lighting detail (higher JPEG quality)."""
-    out.parent.mkdir(parents=True, exist_ok=True)
-    try:
-        with Image.open(src) as img:
-            img = img.convert("RGB")
-            w, h = img.size
-            scale = min(1.0, float(max_side) / max(w, h))
-            if scale < 1.0:
-                img = img.resize((max(1, int(w * scale)), max(1, int(h * scale))), Image.Resampling.LANCZOS)
-            img.save(out, format="JPEG", quality=95, optimize=True)
-        return out
-    except Exception:
-        shutil.copy2(src, out)
-        return out
-
-
-def run_project_video_job(
-    base: Path,
-    *,
-    mode: str,
-    prompt: str = "",
-    duration_sec: int = 5,
-    public_base_url: str = "",
-    model: str = "",
-    client_ip: str = "",
-) -> dict:
-    """Execute studio video scenarios into output/video/."""
-    key = routerai_key()
-    if not key:
-        raise RuntimeError("RouterAI key is missing (ROUTERAI_API_KEY)")
-
-    video_dir = base / "output" / "video"
-    video_dir.mkdir(parents=True, exist_ok=True)
-    mode_norm = (mode or "from_photo").strip().lower()
-    duration_sec = max(5, min(15, int(duration_sec or 5)))
-    final_path = base / "output" / "final_imported_render.png"
-    source_photo = base / "input" / "building.png"
-    clip_path = video_dir / "source_clip.mp4"
-    result_path = video_dir / "result.mp4"
-    before_path = video_dir / "before.mp4"
-    after_path = video_dir / "after.mp4"
-    chosen_model = (model or "").strip() or video_model()
-    # Restrict to known catalog when possible
-    known_ids = {m["id"] for m in ROUTERAI_VIDEO_MODELS}
-    if known_ids and chosen_model not in known_ids and not (model or "").strip():
-        chosen_model = video_model()
-    job: dict = {
-        "created_at": now_iso(),
-        "mode": mode_norm,
-        "model": chosen_model,
-        "duration_sec": duration_sec,
-        "prompt": (prompt or "").strip()[:4000],
-        "status": "running",
-        "ffmpeg": has_ffmpeg(),
-    }
-    (video_dir / "last_job.json").write_text(json.dumps(job, ensure_ascii=False, indent=2), encoding="utf-8")
-    append_pipeline_log(base, "video_job_start", job)
-
-    try:
-        if mode_norm in {"from_photo", "photo_overview", "from_render"}:
-            # Двухэтапно: видео ТОЛЬКО с готовой ночной концепции (наши линейки/прожекторы).
-            # Дневной source без рендера запрещён — иначе Seedance «гуляет» без нашей подсветки.
-            if not final_path.exists():
-                raise RuntimeError(
-                    "Сначала сделайте ночную концепцию во вкладке «Фото» "
-                    "(по вашим данным: линейный свет, прожекторы). "
-                    "Видео строится только из готового ночного кадра."
-                )
-            still = video_dir / "still_for_video.jpg"
-            _prepare_video_still(final_path, still)
-            job["still_source"] = "output/final_imported_render.png"
-            info = run_image_to_video(
-                key=key,
-                image_data_uri=image_data_url(still),
-                out_path=result_path,
-                prompt=(prompt or PHOTO_OVERVIEW_PROMPT),
-                duration=duration_sec,
-                model=chosen_model,
-            )
-            job.update(info)
-            job["status"] = "completed"
-            job["result"] = "output/video/result.mp4"
-            job["pipeline"] = "night_render_then_video"
-
-        elif mode_norm in {"from_clip_relight", "clip_relight", "relight"}:
-            if not clip_path.exists():
-                raise RuntimeError("Сначала загрузите видео объекта")
-            trimmed = video_dir / "clip_trim.mp4"
-            trim_video(clip_path, trimmed, seconds=8.0)
-            # Prefer public URL if available (lighter than huge data-URI)
-            video_uri = ""
-            pub = (public_base_url or "").rstrip("/")
-            if pub:
-                video_uri = f"{pub}/api/projects/{base.name}/file/output/video/clip_trim.mp4"
-            else:
-                video_uri = media_data_url(trimmed)
-            info = run_clip_relight(
-                key=key,
-                video_data_uri=video_uri,
-                out_path=result_path,
-                prompt=(prompt or CLIP_RELIGHT_PROMPT),
-                model=chosen_model,
-            )
-            job.update(info)
-            job["status"] = "completed"
-            job["result"] = "output/video/result.mp4"
-
-        elif mode_norm in {"from_clip_before_after", "before_after", "clip_before_after"}:
-            if not clip_path.exists():
-                raise RuntimeError("Сначала загрузите видео объекта")
-            trim_video(clip_path, before_path, seconds=5.0)
-            # After: только с готовой ночной концепцией (наш свет), не Seedance-relight «с нуля».
-            if not final_path.exists():
-                raise RuntimeError(
-                    "Для «до/после» сначала сделайте ночную концепцию во вкладке «Фото». "
-                    "Ролик «после» берётся из вашей подсветки, а не придумывается моделью заново."
-                )
-            still = video_dir / "still_for_video.jpg"
-            _prepare_video_still(final_path, still)
-            info = run_image_to_video(
-                key=key,
-                image_data_uri=image_data_url(still),
-                out_path=after_path,
-                prompt=(prompt or PHOTO_OVERVIEW_PROMPT),
-                duration=duration_sec,
-                model=chosen_model,
-            )
-            concat_before_after(before_path, after_path, result_path)
-            job.update(info)
-            job["status"] = "completed"
-            job["result"] = "output/video/result.mp4"
-            job["before"] = "output/video/before.mp4"
-            job["after"] = "output/video/after.mp4"
-            job["glued"] = True
-            job["pipeline"] = "clip_before_plus_night_render_after"
-        else:
-            raise RuntimeError(f"Unknown video mode: {mode_norm}")
-    except Exception as exc:
-        job["status"] = "error"
-        job["error"] = str(exc)[:1200]
-        (video_dir / "last_job.json").write_text(json.dumps(job, ensure_ascii=False, indent=2), encoding="utf-8")
-        append_pipeline_log(base, "video_job_error", job)
-        write_project_meta(base, {"last_video_job": job, "status": "video_error"})
-        raise
-
-    (video_dir / "last_job.json").write_text(json.dumps(job, ensure_ascii=False, indent=2), encoding="utf-8")
-    append_pipeline_log(base, "video_job_done", job)
-    hist = save_video_history_entry(
-        base,
-        mode=mode_norm,
-        model=chosen_model,
-        note=f"Видео · {mode_norm}",
-        client_ip=client_ip,
-    )
-    write_project_meta(base, {
-        "last_video_job": job,
-        "status": "video_ready",
-        "video_result": job.get("result") or "output/video/result.mp4",
-        "routerai_video_model": chosen_model,
-        "feedback_required": True,
-        "active_history_id": (hist or {}).get("id"),
-        "last_history_entry": hist or {},
-    })
-    job["history_id"] = (hist or {}).get("id")
-    return job
 
 
 def image_aspect_ratio(path: Path) -> str:
@@ -5762,160 +5256,14 @@ def landing():
     return RedirectResponse(url="/studio", status_code=302)
 
 
-@app.get("/auth/max", response_class=HTMLResponse)
-def auth_max_page(next: str = "/studio") -> str:
-    return render_max_auth_html(next_url=next or "/studio")
 
 
-@app.get("/auth/bridge")
-def auth_bridge(request: Request, token: str = "", next: str = "/studio"):
-    """Одноразовая ссылка из бота: cookie + localStorage token, затем студия."""
-    payload = max_bot_mod.consume_bridge_token(CLOUD_DIR, token)
-    if not payload:
-        return RedirectResponse(url="/auth/max?next=/studio", status_code=302)
-    uid = str(payload.get("max_user_id") or "").strip()
-    if not uid:
-        return RedirectResponse(url="/auth/max?next=/studio", status_code=302)
-    users = max_auth_mod.load_users(CLOUD_DIR)
-    if uid not in users:
-        max_auth_mod.upsert_user(
-            CLOUD_DIR,
-            {"user": {"id": uid, "first_name": "", "last_name": "", "username": ""}, "ip": ""},
-        )
-    dest = payload.get("next") if str(payload.get("next") or "").startswith("/") else None
-    if not dest:
-        dest = next if next.startswith("/") else "/studio"
-    session_token = max_auth_mod.issue_session_token(uid)
-    # HTML: cookie ставится заголовком, токен — в localStorage (тот же браузер при следующих визитах)
-    html = f"""<!doctype html>
-<html lang="ru"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>NITEOS · Вход</title>
-<style>body{{margin:0;min-height:100vh;display:grid;place-items:center;background:#05070a;color:#eef2f6;font:15px Outfit,Segoe UI,sans-serif}}</style>
-</head><body><p>Сохраняем вход…</p>
-<script>
-try{{localStorage.setItem('niteos_max_session',{json.dumps(session_token)});}}catch(_e){{}}
-location.replace({json.dumps(dest)});
-</script></body></html>"""
-    resp = HTMLResponse(content=html, status_code=200)
-    _attach_max_session(resp, uid, request)
-    return resp
 
 
-@app.get("/max/app", response_class=HTMLResponse)
-def max_mini_app_page() -> str:
-    """Mini App entry = главная. Студия не светится наружу — только после входа с лендинга."""
-    return render_landing_html()
 
 
-@app.post("/api/max/webhook")
-async def api_max_webhook(request: Request) -> dict:
-    if MAX_WEBHOOK_SECRET:
-        got = (request.headers.get("X-Max-Bot-Api-Secret") or "").strip()
-        if got != MAX_WEBHOOK_SECRET:
-            raise HTTPException(status_code=403, detail="forbidden")
-    try:
-        body = await request.json()
-    except Exception as exc:
-        raise HTTPException(status_code=400, detail="invalid json") from exc
-    updates = body.get("updates") if isinstance(body, dict) and isinstance(body.get("updates"), list) else [body]
-    for upd in updates:
-        if isinstance(upd, dict):
-            try:
-                max_bot_mod.handle_update(CLOUD_DIR, PROJECTS_DIR, upd)
-            except Exception as exc:
-                print(f"[max webhook] handler error: {exc}")
-    return {"ok": True}
 
 
-@app.get("/api/max/bot-status")
-def api_max_bot_status() -> dict:
-    if not max_bot_api_mod.bot_token():
-        return {"ok": False, "configured": False}
-    try:
-        me = max_bot_api_mod.get_me()
-        return {
-            "ok": True,
-            "configured": True,
-            "username": me.get("username") or "",
-            "name": me.get("name") or "",
-            "public_base_url": PUBLIC_BASE_URL,
-            "mini_app_url": f"{PUBLIC_BASE_URL.rstrip('/')}/",
-            "mini_app_url_alt": f"{PUBLIC_BASE_URL.rstrip('/')}/max/app",
-            "setup_hint": (
-                "В кабинете MAX: Чат-боты → бот → ⋮ Настройки (или Расширенные настройки) → "
-                "вставьте mini_app_url (только https, без пути лучше) → кнопка «Открыть» → Сохранить. "
-                "Нужна прошедшая модерация бота."
-            ),
-        }
-    except Exception as exc:
-        return {"ok": False, "configured": True, "error": str(exc)}
-
-
-@app.post("/api/auth/max")
-async def api_auth_max(
-    request: Request,
-    response: Response,
-    init_data: str = Form(""),
-    next: str = Form("/studio"),
-) -> dict:
-    try:
-        payload = max_auth_mod.validate_init_data(init_data)
-    except ValueError as exc:
-        raise HTTPException(status_code=401, detail=str(exc)) from exc
-    user_row = max_auth_mod.upsert_user(CLOUD_DIR, payload)
-    session_token = _attach_max_session(response, str(user_row["max_user_id"]), request)
-    safe_next = next if isinstance(next, str) and next.startswith("/") else "/studio"
-    return {
-        "ok": True,
-        "user": user_row,
-        "next": safe_next,
-        "session_token": session_token,
-        "message": "Вход через MAX выполнен",
-    }
-
-
-@app.post("/api/auth/restore")
-async def api_auth_restore(request: Request, response: Response) -> dict:
-    """Восстановить cookie из localStorage-токена (без повторного захода в MAX)."""
-    try:
-        body = await request.json()
-    except Exception:
-        body = {}
-    token = str((body or {}).get("token") or "").strip()
-    uid = max_auth_mod.verify_session_token(token)
-    if not uid:
-        raise HTTPException(status_code=401, detail="session expired")
-    users = max_auth_mod.load_users(CLOUD_DIR)
-    row = users.get(uid)
-    if not row:
-        raise HTTPException(status_code=401, detail="user unknown")
-    session_token = _attach_max_session(response, uid, request)
-    return {"ok": True, "user": row, "session_token": session_token}
-
-
-@app.get("/api/auth/me")
-def api_auth_me(request: Request) -> dict:
-    row = max_session_user(request)
-    if not row:
-        return {"ok": False, "user": None}
-    return {"ok": True, "user": row}
-
-
-@app.get("/api/auth/my-projects")
-def api_auth_my_projects(request: Request, limit: int = 40) -> dict:
-    row = max_session_user(request)
-    if not row:
-        return {"ok": False, "projects": []}
-    uid = str(row.get("max_user_id") or "")
-    lim = max(1, min(int(limit or 40), 80))
-    items = max_bot_mod.list_user_projects(PROJECTS_DIR, uid, limit=lim)
-    return {"ok": True, "projects": items, "user": row}
-
-
-@app.post("/api/auth/logout")
-def api_auth_logout(response: Response) -> dict:
-    response.delete_cookie(MAX_SESSION_COOKIE, path="/")
-    return {"ok": True}
 
 
 @app.get("/dealer", response_class=HTMLResponse)
@@ -5945,24 +5293,53 @@ def admin_studio_page() -> str:
     return inject_page_widgets(ADMIN_STUDIO_HTML)
 
 
+
+@app.get("/api/my-projects")
+def api_my_projects(limit: int = 40) -> dict:
+    """Local photo projects (no Max auth)."""
+    lim = max(1, min(100, int(limit or 40)))
+    items: list[dict] = []
+    if PROJECTS_DIR.exists():
+        dirs = sorted(
+            [p for p in PROJECTS_DIR.iterdir() if p.is_dir()],
+            key=lambda p: p.stat().st_mtime,
+            reverse=True,
+        )
+        for base in dirs[:lim]:
+            meta: dict = {}
+            meta_path = base / "meta.json"
+            if meta_path.exists():
+                try:
+                    meta = json.loads(meta_path.read_text(encoding="utf-8"))
+                except Exception:
+                    meta = {}
+            final = base / "output" / "final.jpg"
+            if not final.exists():
+                final = base / "output" / "final.png"
+            thumb = ""
+            if final.exists():
+                thumb = f"/api/projects/{base.name}/file/output/{final.name}"
+            title = str(meta.get("title") or meta.get("name") or base.name)
+            items.append(
+                {
+                    "id": base.name,
+                    "title": title,
+                    "created_at": meta.get("created_at") or "",
+                    "updated_at": meta.get("updated_at") or "",
+                    "thumb_url": thumb,
+                    "final_url": thumb,
+                    "studio_url": f"/studio?project={base.name}",
+                }
+            )
+    return {"ok": True, "items": items, "count": len(items)}
+
+
 @app.get("/studio", response_class=HTMLResponse)
 def studio_page(request: Request):
     """Vision Agent Studio: анализ фасада → референс → генерация → чат."""
-    if studio_auth_required() and not max_session_user(request):
-        from urllib.parse import quote
-
-        q = request.url.query
-        nxt = "/studio" + (f"?{q}" if q else "")
-        return RedirectResponse(url=f"/auth/max?next={quote(nxt, safe='')}", status_code=302)
     return HTMLResponse(inject_page_widgets(AGENT_STUDIO_HTML))
 
 
-@app.get("/video")
-def video_studio_page(project: str = "") -> RedirectResponse:
-    """Видео делается в AI Studio (одно окно). Старый URL → /studio."""
-    pid = (project or "").strip()
-    target = f"/studio?project={pid}#video" if pid else "/studio#video"
-    return RedirectResponse(url=target, status_code=302)
 
 
 def _request_public_base(request: Request) -> str:
@@ -5973,197 +5350,7 @@ def _request_public_base(request: Request) -> str:
     return f"{proto}://{host}".rstrip("/")
 
 
-@app.post("/api/projects/{project_id}/video/upload-clip")
-async def project_video_upload_clip(
-    project_id: str,
-    request: Request,
-    clip: UploadFile = File(...),
-) -> dict:
-    base = project_dir(project_id)
-    video_dir = base / "output" / "video"
-    video_dir.mkdir(parents=True, exist_ok=True)
-    raw = await clip.read()
-    if not raw:
-        raise HTTPException(status_code=400, detail="Пустой видеофайл")
-    if len(raw) > 120 * 1024 * 1024:
-        raise HTTPException(status_code=400, detail="Видео слишком большое (макс. ~120 МБ)")
-    target = video_dir / "source_clip.mp4"
-    target.write_bytes(raw)
-    write_project_meta(base, {
-        "has_source_clip": True,
-        "source_clip": "output/video/source_clip.mp4",
-        "updated_at": now_iso(),
-    })
-    append_pipeline_log(base, "video_clip_uploaded", {"bytes": len(raw), "name": clip.filename or ""})
-    track_project_action(base, "video_clip_uploaded", request, {"bytes": len(raw)})
-    return {
-        "ok": True,
-        "project_id": project_id,
-        "clip_url": f"/api/projects/{project_id}/file/output/video/source_clip.mp4?t={int(time.time())}",
-        "message": "Клип загружен. Выберите: подсветка на клипе или склейка до/после.",
-    }
 
-
-def _humanize_video_error(raw: str) -> str:
-    text = str(raw or "").strip()
-    low = text.lower()
-    if "402" in text or "insufficient balance" in low or "available balance" in low:
-        credits = fetch_routerai_credits()
-        bal = _balance_short(credits)
-        hold = ROUTERAI_VIDEO_HOLD_RUB
-        return (
-            f"RouterAI отказал по балансу (сейчас {bal}). "
-            f"Для Seedance их API требует свободных ≥ {hold:.0f} ₽ холдом; "
-            f"списывают только факт (~десятки ₽ за Fast). Пополните RouterAI и снова «Сделать видео»."
-        )
-    if "401" in text or "unauthorized" in low or "invalid api" in low:
-        return "Видео не собралось: проблема с ключом RouterAI. Проверьте ROUTERAI_API_KEY."
-    if "timeout" in low:
-        return "Видео не собралось: таймаут у провайдера. Попробуйте ещё раз через минуту."
-    # Keep provider detail, but cap length for UI
-    return text[:500] if text else "Видео не собралось — неизвестная ошибка"
-
-
-@app.post("/api/projects/{project_id}/video/generate")
-async def project_video_generate(
-    project_id: str,
-    request: Request,
-    mode: str = Form("from_photo"),
-    prompt: str = Form(""),
-    duration_sec: int = Form(5),
-    routerai_model: str = Form(""),
-) -> dict:
-    base = project_dir(project_id)
-    bind_max_user_to_project(base, request)
-    # One-click: night concept → video. Unrated still must not block the reel.
-    require_completed_feedback(base, for_video=True)
-    require_routerai_balance_for_video()
-    public_base = _request_public_base(request)
-    ip = ""
-    try:
-        ip = (request.client.host if request.client else "") or ""
-    except Exception:
-        ip = ""
-    chosen = (routerai_model or "").strip() or video_model()
-    try:
-        job = await asyncio.to_thread(
-            run_project_video_job,
-            base,
-            mode=mode,
-            prompt=prompt,
-            duration_sec=duration_sec,
-            public_base_url=public_base,
-            model=chosen,
-            client_ip=ip,
-        )
-    except Exception as exc:
-        track_project_action(base, "video_generate_error", request, {"error": str(exc)[:300], "mode": mode})
-        detail = _humanize_video_error(str(exc))
-        raise HTTPException(status_code=500, detail=detail) from exc
-    track_project_action(base, "video_generate_done", request, {
-        "mode": mode,
-        "job_id": job.get("job_id") or "",
-        "status": job.get("status") or "",
-        "routerai_model": chosen,
-    })
-    ts = int(time.time())
-    state = get_studio_state(base)
-    return {
-        "ok": True,
-        "ready": True,
-        "project_id": project_id,
-        "job": job,
-        "result_url": f"/api/projects/{project_id}/file/output/video/result.mp4?t={ts}",
-        "before_url": f"/api/projects/{project_id}/file/output/video/before.mp4?t={ts}" if job.get("before") else "",
-        "after_url": f"/api/projects/{project_id}/file/output/video/after.mp4?t={ts}" if job.get("after") else "",
-        "message": "Видео готово — поставьте оценку",
-        "studio_url": f"/studio?project={project_id}",
-        "history": state.get("history") or [],
-        "feedback_required": True,
-        "active_history_id": state.get("active_history_id"),
-        "history_id": job.get("history_id"),
-    }
-
-
-@app.post("/api/video/generate")
-async def video_generate(
-    request: Request,
-    prompt: str = Form(""),
-    mode: str = Form("from_photo"),
-    duration_sec: int = Form(5),
-    project_id: str = Form(""),
-    image: UploadFile | None = File(None),
-    clip: UploadFile | None = File(None),
-) -> dict:
-    """Legacy/global video endpoint used by /video page."""
-    pid = (project_id or "").strip()
-    if pid:
-        base = project_dir(pid)
-    else:
-        pid = uuid.uuid4().hex[:12]
-        base = PROJECTS_DIR / pid
-        ensure_project_dirs(base)
-        write_project_meta(base, {
-            "id": pid,
-            "name": "Video project",
-            "created_at": now_iso(),
-            "work_mode": "video_studio",
-            "status": "video_queued",
-            "mode": "video_studio",
-        })
-        append_pipeline_log(base, "project_created", {"mode": "video_studio"})
-
-    video_dir = base / "output" / "video"
-    video_dir.mkdir(parents=True, exist_ok=True)
-    if image is not None and image.filename:
-        raw = await image.read()
-        ext = Path(image.filename).suffix.lower() or ".png"
-        if ext not in IMAGE_EXTS:
-            ext = ".png"
-        target = video_dir / f"source{ext}"
-        target.write_bytes(raw)
-        building = base / "input" / "building.png"
-        if not building.exists():
-            try:
-                save_rgb(target, building)
-            except Exception:
-                shutil.copy2(target, building)
-        # If no night render yet, use uploaded image as still source via copy to final placeholder
-        final_path = base / "output" / "final_imported_render.png"
-        if not final_path.exists():
-            try:
-                save_rgb(target, final_path)
-            except Exception:
-                shutil.copy2(target, final_path)
-    if clip is not None and clip.filename:
-        raw = await clip.read()
-        (video_dir / "source_clip.mp4").write_bytes(raw)
-
-    require_routerai_balance_for_video()
-    public_base = _request_public_base(request)
-    try:
-        job = await asyncio.to_thread(
-            run_project_video_job,
-            base,
-            mode=mode,
-            prompt=prompt,
-            duration_sec=duration_sec,
-            public_base_url=public_base,
-        )
-    except HTTPException:
-        raise
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=_humanize_video_error(str(exc))) from exc
-    ts = int(time.time())
-    return {
-        "ok": True,
-        "ready": True,
-        "project_id": pid,
-        "job": job,
-        "result_url": f"/api/projects/{pid}/file/output/video/result.mp4?t={ts}",
-        "message": "Видео готово",
-        "studio_url": f"/studio?project={pid}",
-    }
 
 
 @app.get("/assets/studio_tour/{filename}")
@@ -6199,43 +5386,13 @@ def favicon():
 
 @app.get("/api/health")
 def health() -> dict:
-    credits = fetch_routerai_credits()
-    hold = ROUTERAI_VIDEO_HOLD_RUB
-    photo_floor = hold + max(0.0, ROUTERAI_PHOTO_HEADROOM_RUB)
     return {
         "ok": True,
         "routerai_key_present": bool(routerai_key()),
         "routerai_model": routerai_model(),
-        "routerai_credits": credits,
-        "routerai_video_hold_rub": hold,
-        "routerai_photo_floor_rub": photo_floor,
-        "routerai_video_ok": (credits is None) or (credits + 1e-6 >= hold),
-        "routerai_photo_ok": (credits is None) or (credits + 1e-6 >= photo_floor),
+        "photo_only": True,
     }
 
-
-@app.get("/api/routerai/credits")
-def api_routerai_credits() -> dict:
-    credits = fetch_routerai_credits()
-    hold = ROUTERAI_VIDEO_HOLD_RUB
-    photo_floor = hold + max(0.0, ROUTERAI_PHOTO_HEADROOM_RUB)
-    return {
-        "ok": credits is not None,
-        "credits": credits,
-        "video_hold_rub": hold,
-        "photo_floor_rub": photo_floor,
-        "video_ok": (credits is None) or (credits + 1e-6 >= hold),
-        "photo_ok": (credits is None) or (credits + 1e-6 >= photo_floor),
-        "message": (
-            None
-            if credits is None
-            else (
-                f"Баланс RouterAI: {credits:.2f} ₽. "
-                f"Видео нужно ≥ {hold:.0f} ₽; фото держим порог {photo_floor:.0f} ₽, "
-                f"чтобы не сжечь холд под видео."
-            )
-        ),
-    }
 
 
 @app.get("/api/routerai-models")
@@ -6266,14 +5423,6 @@ def list_routerai_models() -> dict:
         },
     }
 
-
-@app.get("/api/routerai-video-models")
-def list_routerai_video_models() -> dict:
-    return {
-        "ok": True,
-        "models": list(ROUTERAI_VIDEO_MODELS),
-        "default": video_model(),
-    }
 
 
 @app.get("/api/visitor/limits")
@@ -6318,7 +5467,6 @@ def create_project(
         meta_out["work_mode"] = "agent_studio"
         meta_out["agent_studio"] = True
     write_project_meta(base, meta_out)
-    bind_max_user_to_project(base, request)
     append_pipeline_log(base, "project_created", {"client_ip": ip, "name": raw_name, "from_project_id": src, "mode": mode_norm})
     return get_project(project_id)
 
@@ -6326,16 +5474,15 @@ def create_project(
 @app.post("/api/projects/{project_id}/rename")
 def rename_project(project_id: str, request: Request, name: str = Form("")) -> dict:
     base = project_dir(project_id)
-    row = max_session_user(request)
+    row = None
     meta = read_project_meta(base)
-    if studio_auth_required():
+    if False:
         if not row:
             raise HTTPException(status_code=401, detail="Нужен вход через MAX")
         owner = str(meta.get("max_user_id") or "").strip()
         uid = str(row.get("max_user_id") or "").strip()
         if owner and uid and owner != uid:
             raise HTTPException(status_code=403, detail="Чужой проект")
-        bind_max_user_to_project(base, request)
     clean = re.sub(r"\s+", " ", (name or "").strip())[:80]
     if not clean:
         raise HTTPException(status_code=400, detail="Пустое имя")
@@ -7038,8 +6185,6 @@ def studio_start(
     visitor_id = enforce_daily_render_quota(request, response)
     base = project_dir(project_id)
     require_completed_feedback(base)
-    require_routerai_balance_for_photo()
-    bind_max_user_to_project(base, request)
     model = resolve_routerai_model(routerai_model)
     track_project_action(base, "studio_start", request, {
         "visitor_id": visitor_id,
@@ -7073,7 +6218,6 @@ async def studio_chat(
 ) -> dict:
     visitor_id = enforce_daily_render_quota(request, response)
     base = project_dir(project_id)
-    require_routerai_balance_for_photo()
     # Edits/chat revisions must stay available without a like/dislike gate —
     # otherwise users cannot iterate on markup. New generation still requires feedback.
     has_ann = bool(annotation) or (annotation_file is not None and bool(getattr(annotation_file, "filename", None)))
@@ -7118,7 +6262,6 @@ def auto_render(
     visitor_id = enforce_daily_render_quota(request, response)
     base = project_dir(project_id)
     require_completed_feedback(base)
-    require_routerai_balance_for_photo()
     if prompt.strip():
         (base / "prompt.txt").write_text(prompt.strip(), encoding="utf-8")
         write_project_meta(base, {"prompt_saved": True})
@@ -7148,7 +6291,6 @@ async def edit_render(
 ) -> dict:
     base = project_dir(project_id)
     require_completed_feedback(base)
-    require_routerai_balance_for_photo()
     has_ann = bool(annotation) or (annotation_file is not None and bool(getattr(annotation_file, "filename", None)))
     track_project_action(base, "edit_request", request, {"has_annotation": has_ann})
     try:
@@ -7181,21 +6323,13 @@ async def api_support_message(
         raise HTTPException(status_code=400, detail="Напишите текст сообщения")
     if len(text) > 8000:
         raise HTTPException(status_code=400, detail="Слишком длинное сообщение")
-    user = max_session_user(request) or {}
-    uid = str(user.get("max_user_id") or "").strip()
-    name = " ".join(
-        x for x in [user.get("first_name") or "", user.get("last_name") or ""] if x
-    ).strip()
-    username = str(user.get("username") or "").strip()
+    uid = ""
+    name = ""
+    username = ""
     kind_safe = (kind or "other").strip().lower()
     if kind_safe not in {"defect", "idea", "question", "other"}:
         kind_safe = "other"
     pid = (project_id or "").strip()
-    if pid:
-        try:
-            bind_max_user_to_project(project_dir(pid), request)
-        except Exception:
-            pass
     stamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
     entry = {
         "id": f"{stamp}_{uuid.uuid4().hex[:8]}",
@@ -7218,34 +6352,7 @@ async def api_support_message(
     print(f"[support] {kind_safe} from {who}: {text[:120]}")
     notify_ok = False
     notify_err = ""
-    if MAX_SUPPORT_NOTIFY_USER_ID and max_bot_api_mod.bot_token():
-        try:
-            kind_ru = {
-                "defect": "Недочёт",
-                "idea": "Предложение",
-                "question": "Вопрос",
-                "other": "Сообщение",
-            }.get(kind_safe, "Сообщение")
-            lines = [
-                f"**{kind_ru}** от **{who}**",
-                f"MAX ID: `{uid or '—'}`" + (f" · @{username}" if username else ""),
-            ]
-            if pid:
-                lines.append(f"Проект: `{pid}`")
-            if entry.get("contact"):
-                lines.append(f"Контакт: {entry['contact']}")
-            lines.append("")
-            lines.append(text[:3500])
-            lines.append("")
-            lines.append(f"Входящие: {PUBLIC_BASE_URL.rstrip('/')}/admin/support")
-            max_bot_api_mod.send_message(
-                user_id=MAX_SUPPORT_NOTIFY_USER_ID,
-                text="\n".join(lines),
-            )
-            notify_ok = True
-        except Exception as exc:
-            notify_err = str(exc)[:300]
-            print(f"[support] notify failed: {notify_err}")
+    pass
     return {
         "ok": True,
         "id": entry["id"],
@@ -7463,7 +6570,6 @@ def _admin_project_card(base: Path) -> dict:
         "references/agent_ref_primary.png" if style_path == agent_ref and agent_ref.exists()
         else ("references/style_reference_target.png" if style.exists() else "")
     )
-    video = base / "output" / "video" / "result.mp4"
     return {
         "project_id": base.name,
         "project_name": meta.get("name") or base.name,
@@ -7490,11 +6596,11 @@ def _admin_project_card(base: Path) -> dict:
         "render_history_count": len(history),
         "has_source": source.exists(),
         "has_final": final.exists(),
-        "has_video": video.exists(),
+        "has_video": False,
         "has_style": bool(style_rel),
         "source_url": f"/api/projects/{base.name}/file/input/building.png" if source.exists() else "",
         "final_url": f"/api/projects/{base.name}/file/output/final_imported_render.png" if final.exists() else "",
-        "video_url": f"/api/projects/{base.name}/file/output/video/result.mp4" if video.exists() else "",
+        "video_url": "",
         "style_url": f"/api/projects/{base.name}/file/{style_rel}" if style_rel else "",
         "dealer_url": urls["dealer"],
         "studio_url": urls["studio"],
